@@ -237,8 +237,8 @@
 	}
 
 	.modal {
-		background: #1a1a1a;
-		border: 1px solid #2a2a2a;
+		background: #1e2329;
+		border: 1px solid #3a3f47;
 		border-radius: 16px;
 		padding: 32px;
 		max-width: 700px;
@@ -252,7 +252,7 @@
 		margin: 0 0 24px 0;
 		font-size: 24px;
 		font-weight: 600;
-		color: #fff;
+		color: #e8eaed;
 	}
 
 	.form {
@@ -270,7 +270,7 @@
 	label {
 		font-size: 14px;
 		font-weight: 500;
-		color: #aaa;
+		color: #a0a4a8;
 	}
 
 	.label-row {
@@ -282,11 +282,11 @@
 	input,
 	textarea,
 	select {
-		background: #111;
-		border: 1px solid #2a2a2a;
+		background: #2d3339;
+		border: 1px solid #3a3f47;
 		border-radius: 8px;
 		padding: 10px 12px;
-		color: #fff;
+		color: #e8eaed;
 		font-size: 14px;
 		font-family: inherit;
 		transition: border-color 0.2s;
@@ -296,7 +296,8 @@
 	textarea:focus,
 	select:focus {
 		outline: none;
-		border-color: #667eea;
+		border-color: #d35400;
+		box-shadow: 0 0 8px rgba(211, 84, 0, 0.3);
 	}
 
 	textarea {
@@ -309,7 +310,7 @@
 		align-items: center;
 		width: 100%;
 		font-size: 12px;
-		color: #888;
+		color: #6c757d;
 		margin-bottom: 8px;
 		padding: 0 2px;
 	}
@@ -355,8 +356,8 @@
 
 	.add-url-btn {
 		background: transparent;
-		border: 1px solid #3a3a3a;
-		color: #667eea;
+		border: 1px solid #3a3f47;
+		color: #d35400;
 		padding: 6px 12px;
 		border-radius: 6px;
 		cursor: pointer;
@@ -365,14 +366,15 @@
 	}
 
 	.add-url-btn:hover {
-		background: rgba(102, 126, 234, 0.1);
-		border-color: #667eea;
+		background: rgba(211, 84, 0, 0.1);
+		border-color: #d35400;
+		box-shadow: 0 0 8px rgba(211, 84, 0, 0.3);
 	}
 
 	.remove-btn {
 		background: transparent;
-		border: 1px solid #3a3a3a;
-		color: #ef4444;
+		border: 1px solid #3a3f47;
+		color: #c0392b;
 		width: 32px;
 		height: 32px;
 		border-radius: 6px;
@@ -385,8 +387,9 @@
 	}
 
 	.remove-btn:hover {
-		background: rgba(239, 68, 68, 0.1);
-		border-color: #ef4444;
+		background: rgba(192, 57, 43, 0.15);
+		border-color: #c0392b;
+		box-shadow: 0 0 8px rgba(192, 57, 43, 0.4);
 	}
 
 	.button-row {
@@ -408,23 +411,24 @@
 
 	.cancel-btn {
 		background: transparent;
-		border: 1px solid #3a3a3a;
-		color: #fff;
+		border: 1px solid #3a3f47;
+		color: #e8eaed;
 	}
 
 	.cancel-btn:hover {
-		background: #2a2a2a;
+		background: #2d3339;
 	}
 
 	.submit-btn {
-		background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+		background: linear-gradient(135deg, #d35400 0%, #c54d00 100%);
 		border: none;
 		color: white;
+		box-shadow: 0 2px 8px rgba(211, 84, 0, 0.3);
 	}
 
 	.submit-btn:hover:not(:disabled) {
 		transform: translateY(-1px);
-		box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+		box-shadow: 0 4px 16px rgba(211, 84, 0, 0.5);
 	}
 
 	.submit-btn:disabled {

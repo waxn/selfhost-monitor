@@ -21,8 +21,8 @@
 		margin: 0;
 		padding: 0;
 		font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-		background: #0f0f0f;
-		color: #fff;
+		background: #0a0e12;
+		color: #e8eaed;
 	}
 
 	:global(*) {

@@ -109,8 +109,8 @@
 <style>
 	.service-card {
 		position: relative;
-		background: linear-gradient(145deg, #1a1a1a 0%, #161616 100%);
-		border: 1px solid #2a2a2a;
+		background: linear-gradient(145deg, #1e2329 0%, #1a1e24 100%);
+		border: 1px solid #3a3f47;
 		border-radius: 16px;
 		padding: 24px;
 		transition: all 0.3s ease;
@@ -120,9 +120,9 @@
 	}
 
 	.service-card:hover {
-		border-color: #3a3a3a;
+		border-color: #d35400;
 		transform: translateY(-2px);
-		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+		box-shadow: 0 8px 24px rgba(211, 84, 0, 0.4);
 	}
 
 	.menu-btn {
@@ -131,7 +131,7 @@
 		right: 12px;
 		background: transparent;
 		border: none;
-		color: #888;
+		color: #6c757d;
 		cursor: pointer;
 		padding: 4px;
 		border-radius: 4px;
@@ -142,20 +142,20 @@
 	}
 
 	.menu-btn:hover {
-		background: #2a2a2a;
-		color: #fff;
+		background: #2d3339;
+		color: #e8eaed;
 	}
 
 	.menu-dropdown {
 		position: absolute;
 		top: 44px;
 		right: 12px;
-		background: #1f1f1f;
-		border: 1px solid #3a3a3a;
+		background: #1e2329;
+		border: 1px solid #3a3f47;
 		border-radius: 8px;
 		padding: 4px;
 		z-index: 10;
-		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.7);
 		min-width: 120px;
 	}
 
@@ -163,7 +163,7 @@
 		width: 100%;
 		background: transparent;
 		border: none;
-		color: #fff;
+		color: #e8eaed;
 		padding: 8px 12px;
 		text-align: left;
 		cursor: pointer;
@@ -173,15 +173,15 @@
 	}
 
 	.menu-dropdown button:hover {
-		background: #2a2a2a;
+		background: #2d3339;
 	}
 
 	.menu-dropdown button.danger {
-		color: #ff4444;
+		color: #c0392b;
 	}
 
 	.menu-dropdown button.danger:hover {
-		background: rgba(255, 68, 68, 0.1);
+		background: rgba(192, 57, 43, 0.15);
 	}
 
 	.service-icon {
@@ -190,7 +190,7 @@
 		margin: 0 auto;
 		border-radius: 12px;
 		overflow: hidden;
-		background: #222;
+		background: #2d3339;
 	}
 
 	.service-icon img {
@@ -207,7 +207,7 @@
 		justify-content: center;
 		font-size: 32px;
 		font-weight: bold;
-		background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+		background: linear-gradient(135deg, #d35400 0%, #c54d00 100%);
 		color: white;
 	}
 
@@ -216,13 +216,13 @@
 		font-size: 18px;
 		font-weight: 600;
 		text-align: center;
-		color: #fff;
+		color: #e8eaed;
 	}
 
 	.device-tag {
 		display: inline-block;
-		background: #2a2a2a;
-		color: #888;
+		background: #2d3339;
+		color: #a0a4a8;
 		padding: 4px 12px;
 		border-radius: 12px;
 		font-size: 12px;
@@ -233,7 +233,7 @@
 	.notes {
 		margin: 0;
 		font-size: 14px;
-		color: #aaa;
+		color: #a0a4a8;
 		text-align: center;
 		line-height: 1.4;
 	}
@@ -246,9 +246,9 @@
 	}
 
 	.url-btn {
-		background: #1f1f1f;
-		border: 1px solid #3a3a3a;
-		color: #fff;
+		background: #2d3339;
+		border: 1px solid #3a3f47;
+		color: #e8eaed;
 		padding: 10px 16px;
 		border-radius: 8px;
 		cursor: pointer;
@@ -261,31 +261,32 @@
 	}
 
 	.url-btn:hover {
-		background: #2a2a2a;
-		border-color: #4a4a4a;
+		background: #343a41;
+		border-color: #d35400;
+		box-shadow: 0 0 12px rgba(211, 84, 0, 0.3);
 	}
 
 	.status-dot {
 		width: 8px;
 		height: 8px;
 		border-radius: 50%;
-		background: #555;
+		background: #6c757d;
 		flex-shrink: 0;
 	}
 
 	.url-btn.up .status-dot {
-		background: #4ade80;
-		box-shadow: 0 0 8px rgba(74, 222, 128, 0.5);
+		background: #229954;
+		box-shadow: 0 0 8px rgba(34, 153, 84, 0.6);
 	}
 
 	.url-btn.down .status-dot {
-		background: #ef4444;
-		box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+		background: #c0392b;
+		box-shadow: 0 0 8px rgba(192, 57, 43, 0.6);
 	}
 
 	.response-time {
 		margin-left: auto;
 		font-size: 12px;
-		color: #888;
+		color: #6c757d;
 	}
 </style>

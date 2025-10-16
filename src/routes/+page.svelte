@@ -150,8 +150,8 @@
 	}
 
 	header {
-		background: linear-gradient(145deg, #1a1a1a 0%, #0f0f0f 100%);
-		border-bottom: 1px solid #2a2a2a;
+		background: linear-gradient(145deg, #1e2329 0%, #0a0e12 100%);
+		border-bottom: 1px solid #3a3f47;
 		padding: 24px;
 		position: sticky;
 		top: 0;
@@ -172,10 +172,7 @@
 		margin: 0;
 		font-size: 28px;
 		font-weight: 700;
-		background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-		-webkit-background-clip: text;
-		-webkit-text-fill-color: transparent;
-		background-clip: text;
+		color: white;
 	}
 
 	.header-actions {
@@ -195,24 +192,26 @@
 	}
 
 	.primary-btn {
-		background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+		background: linear-gradient(135deg, #d35400 0%, #c54d00 100%);
 		color: white;
+		box-shadow: 0 2px 8px rgba(211, 84, 0, 0.3);
 	}
 
 	.primary-btn:hover {
 		transform: translateY(-1px);
-		box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+		box-shadow: 0 4px 16px rgba(211, 84, 0, 0.5);
 	}
 
 	.secondary-btn {
 		background: transparent;
-		border: 1px solid #3a3a3a;
-		color: #fff;
+		border: 1px solid #3a3f47;
+		color: #e8eaed;
 	}
 
 	.secondary-btn:hover {
-		background: #2a2a2a;
-		border-color: #4a4a4a;
+		background: #2d3339;
+		border-color: #d35400;
+		box-shadow: 0 0 12px rgba(211, 84, 0, 0.3);
 	}
 
 	.devices-section {
@@ -225,7 +224,7 @@
 		margin: 0 0 16px 0;
 		font-size: 20px;
 		font-weight: 600;
-		color: #fff;
+		color: #e8eaed;
 	}
 
 	.devices-list {
@@ -235,8 +234,8 @@
 	}
 
 	.device-item {
-		background: #1a1a1a;
-		border: 1px solid #2a2a2a;
+		background: #2d3339;
+		border: 1px solid #3a3f47;
 		border-radius: 12px;
 		padding: 16px 20px;
 		display: flex;
@@ -246,8 +245,9 @@
 	}
 
 	.device-item:hover {
-		border-color: #3a3a3a;
-		background: #1f1f1f;
+		border-color: #d35400;
+		background: #343a41;
+		box-shadow: 0 0 12px rgba(211, 84, 0, 0.3);
 	}
 
 	.device-info {
@@ -257,13 +257,13 @@
 	.device-name {
 		font-size: 16px;
 		font-weight: 600;
-		color: #fff;
+		color: #e8eaed;
 		margin-bottom: 4px;
 	}
 
 	.device-description {
 		font-size: 14px;
-		color: #888;
+		color: #a0a4a8;
 	}
 
 	.device-actions {
@@ -273,8 +273,8 @@
 
 	.icon-btn {
 		background: transparent;
-		border: 1px solid #2a2a2a;
-		color: #888;
+		border: 1px solid #3a3f47;
+		color: #6c757d;
 		width: 32px;
 		height: 32px;
 		border-radius: 6px;
@@ -286,15 +286,16 @@
 	}
 
 	.icon-btn:hover {
-		background: #2a2a2a;
-		border-color: #3a3a3a;
-		color: #fff;
+		background: #2d3339;
+		border-color: #d35400;
+		color: #e8eaed;
+		box-shadow: 0 0 12px rgba(211, 84, 0, 0.3);
 	}
 
 	.icon-btn.danger:hover {
-		background: rgba(239, 68, 68, 0.1);
-		border-color: #ef4444;
-		color: #ef4444;
+		background: rgba(192, 57, 43, 0.15);
+		border-color: #c0392b;
+		color: #c0392b;
 	}
 
 	main {
@@ -306,7 +307,7 @@
 	.loading {
 		text-align: center;
 		padding: 60px 20px;
-		color: #888;
+		color: #a0a4a8;
 		font-size: 16px;
 	}
 
@@ -324,12 +325,12 @@
 		margin: 0 0 8px 0;
 		font-size: 24px;
 		font-weight: 600;
-		color: #fff;
+		color: #e8eaed;
 	}
 
 	.empty-state p {
 		margin: 0 0 24px 0;
-		color: #888;
+		color: #a0a4a8;
 		font-size: 16px;
 	}
 
