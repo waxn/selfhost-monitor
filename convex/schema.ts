@@ -18,6 +18,7 @@ export default defineSchema({
     serviceId: v.id("services"),
     label: v.string(), // e.g., "Local", "Web", "API"
     url: v.string(),
+    pingInterval: v.optional(v.number()), // in minutes, defaults to 5
   }).index("by_service", ["serviceId"]),
 
   uptimeChecks: defineTable({

@@ -33,7 +33,7 @@
 	let notes = $state('');
 	let deviceId = $state<Id<'devices'> | ''>('');
 	let iconUrl = $state('');
-	let urls = $state<Array<{ id?: Id<'serviceUrls'>; label: string; url: string }>>([]);
+	let urls = $state<Array<{ id?: Id<'serviceUrls'>; label: string; url: string; pingInterval?: number }>>([]);
 
 	$effect(() => {
 		if (isOpen) {
@@ -42,7 +42,7 @@
 				notes = editingService.notes || '';
 				deviceId = editingService.deviceId;
 				iconUrl = editingService.iconUrl || '';
-				urls = editingService.urls.map((u) => ({ id: u._id, label: u.label, url: u.url }));
+				urls = editingService.urls.map((u) => ({ id: u._id, label: u.label, url: u.url, pingInterval: u.pingInterval ?? 5 }));
 			} else {
 				name = '';
 				notes = '';
@@ -54,7 +54,7 @@
 	});
 
 	function addUrl() {
-		urls = [...urls, { label: '', url: '' }];
+		urls = [...urls, { label: '', url: '', pingInterval: 5 }];
 	}
 
 	function removeUrlAtIndex(index: number) {
@@ -88,12 +88,13 @@
 				// Update or create URLs
 				for (const url of urls) {
 					if (url.id) {
-						await updateUrl({ id: url.id, label: url.label, url: url.url });
+						await updateUrl({ id: url.id, label: url.label, url: url.url, pingInterval: url.pingInterval });
 					} else {
 						await createUrl({
 							serviceId: editingService._id,
 							label: url.label,
-							url: url.url
+							url: url.url,
+							pingInterval: url.pingInterval
 						});
 					}
 				}
@@ -110,7 +111,8 @@
 					await createUrl({
 						serviceId,
 						label: url.label,
-						url: url.url
+						url: url.url,
+						pingInterval: url.pingInterval
 					});
 				}
 			}
@@ -172,10 +174,20 @@
 						<button type="button" onclick={addUrl} class="add-url-btn">+ Add URL</button>
 					</div>
 
+					{#if urls.length > 0}
+						<div class="url-headers">
+							<span class="header-label">Label</span>
+							<span class="header-url">URL</span>
+							<span class="header-interval">Min</span>
+							<span class="header-action"></span>
+						</div>
+					{/if}
+
 					{#each urls as url, i}
 						<div class="url-row">
-							<input type="text" bind:value={url.label} placeholder="Label (e.g., Local)" />
-							<input type="url" bind:value={url.url} placeholder="https://..." />
+							<input type="text" bind:value={url.label} placeholder="Local" class="url-label" />
+							<input type="url" bind:value={url.url} placeholder="https://..." class="url-input" />
+							<input type="number" bind:value={url.pingInterval} placeholder="5" min="1" class="url-interval" />
 							<button type="button" onclick={() => removeUrlAtIndex(i)} class="remove-btn">×</button>
 						</div>
 					{/each}
@@ -212,10 +224,11 @@
 		border: 1px solid #2a2a2a;
 		border-radius: 16px;
 		padding: 32px;
-		max-width: 600px;
+		max-width: 700px;
 		width: 100%;
 		max-height: 90vh;
 		overflow-y: auto;
+		overflow-x: hidden;
 	}
 
 	h2 {
@@ -273,18 +286,54 @@
 		resize: vertical;
 	}
 
+	.url-headers {
+		display: flex;
+		gap: 8px;
+		align-items: center;
+		width: 100%;
+		font-size: 12px;
+		color: #888;
+		margin-bottom: 8px;
+		padding: 0 2px;
+	}
+
+	.header-label {
+		flex: 0 0 90px;
+	}
+
+	.header-url {
+		flex: 1;
+	}
+
+	.header-interval {
+		flex: 0 0 60px;
+		text-align: center;
+	}
+
+	.header-action {
+		width: 32px;
+	}
+
 	.url-row {
 		display: flex;
 		gap: 8px;
 		align-items: center;
+		width: 100%;
 	}
 
-	.url-row input:first-child {
-		flex: 0 0 120px;
+	.url-label {
+		flex: 0 0 90px;
+		min-width: 0;
 	}
 
-	.url-row input:nth-child(2) {
+	.url-input {
 		flex: 1;
+		min-width: 0;
+	}
+
+	.url-interval {
+		flex: 0 0 60px;
+		min-width: 60px;
 	}
 
 	.add-url-btn {

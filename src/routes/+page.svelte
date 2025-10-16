@@ -229,9 +229,9 @@
 	}
 
 	.devices-list {
-		display: flex;
-		flex-direction: column;
-		gap: 8px;
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+		gap: 16px;
 	}
 
 	.device-item {
@@ -352,6 +352,10 @@
 		.primary-btn,
 		.secondary-btn {
 			flex: 1;
+		}
+
+		.devices-list {
+			grid-template-columns: 1fr;
 		}
 
 		.services-grid {

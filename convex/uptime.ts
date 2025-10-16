@@ -43,10 +43,22 @@ export const checkUrl = internalAction({
 export const checkAllUrls = internalAction({
   handler: async (ctx) => {
     const urls = await ctx.runQuery(internal.uptime.getAllUrls);
+    const now = Date.now();
 
-    // Check all URLs in parallel
+    // Filter URLs that need to be checked based on their interval
+    const urlsToCheck = [];
+    for (const url of urls) {
+      const lastCheck = await ctx.runQuery(internal.uptime.getLastCheck, { urlId: url._id });
+      const interval = (url.pingInterval ?? 5) * 60 * 1000; // convert minutes to ms
+
+      if (!lastCheck || (now - lastCheck.timestamp) >= interval) {
+        urlsToCheck.push(url);
+      }
+    }
+
+    // Check URLs that are due in parallel
     await Promise.all(
-      urls.map((url: { _id: any }) =>
+      urlsToCheck.map((url: { _id: any }) =>
         ctx.runAction(internal.uptime.checkUrl, { urlId: url._id })
       )
     );
@@ -63,6 +75,17 @@ export const getUrl = internalQuery({
 export const getAllUrls = internalQuery({
   handler: async (ctx) => {
     return await ctx.db.query("serviceUrls").collect();
+  },
+});
+
+export const getLastCheck = internalQuery({
+  args: { urlId: v.id("serviceUrls") },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("uptimeChecks")
+      .withIndex("by_url", (q) => q.eq("serviceUrlId", args.urlId))
+      .order("desc")
+      .first();
   },
 });
 

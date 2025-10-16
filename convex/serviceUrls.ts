@@ -6,12 +6,14 @@ export const create = mutation({
     serviceId: v.id("services"),
     label: v.string(),
     url: v.string(),
+    pingInterval: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     return await ctx.db.insert("serviceUrls", {
       serviceId: args.serviceId,
       label: args.label,
       url: args.url,
+      pingInterval: args.pingInterval,
     });
   },
 });
@@ -21,6 +23,7 @@ export const update = mutation({
     id: v.id("serviceUrls"),
     label: v.string(),
     url: v.string(),
+    pingInterval: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const { id, ...updates } = args;
