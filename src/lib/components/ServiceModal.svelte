@@ -61,6 +61,21 @@
 		urls = urls.filter((_, i) => i !== index);
 	}
 
+	function normalizeUrl(url: string): string {
+		if (!url) return url;
+
+		// If already has protocol, return as-is
+		if (url.startsWith('http://') || url.startsWith('https://')) {
+			return url;
+		}
+
+		// Check if it's a local/private IP or localhost
+		const isLocal = /^(localhost|127\.|192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.)/.test(url);
+
+		// Use http for local, https for everything else
+		return isLocal ? `http://${url}` : `https://${url}`;
+	}
+
 	async function handleSubmit() {
 		if (!name || !deviceId) return;
 
@@ -87,13 +102,14 @@
 
 				// Update or create URLs
 				for (const url of urls) {
+					const normalizedUrl = normalizeUrl(url.url);
 					if (url.id) {
-						await updateUrl({ id: url.id, label: url.label, url: url.url, pingInterval: url.pingInterval });
+						await updateUrl({ id: url.id, label: url.label, url: normalizedUrl, pingInterval: url.pingInterval });
 					} else {
 						await createUrl({
 							serviceId: editingService._id,
 							label: url.label,
-							url: url.url,
+							url: normalizedUrl,
 							pingInterval: url.pingInterval
 						});
 					}
@@ -108,10 +124,11 @@
 
 				// Create URLs
 				for (const url of urls) {
+					const normalizedUrl = normalizeUrl(url.url);
 					await createUrl({
 						serviceId,
 						label: url.label,
-						url: url.url,
+						url: normalizedUrl,
 						pingInterval: url.pingInterval
 					});
 				}
@@ -186,7 +203,7 @@
 					{#each urls as url, i}
 						<div class="url-row">
 							<input type="text" bind:value={url.label} placeholder="Local" class="url-label" />
-							<input type="url" bind:value={url.url} placeholder="https://..." class="url-input" />
+							<input type="text" bind:value={url.url} placeholder="youtube.com or 192.168.1.100:8080" class="url-input" />
 							<input type="number" bind:value={url.pingInterval} placeholder="5" min="1" class="url-interval" />
 							<button type="button" onclick={() => removeUrlAtIndex(i)} class="remove-btn">×</button>
 						</div>
