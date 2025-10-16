@@ -1,16 +1,19 @@
 import { ConvexClient } from 'convex/browser';
-import { getContext, setContext } from 'svelte';
 
-const CONVEX_KEY = Symbol('convex');
+let client: ConvexClient | null = null;
 
 export function initConvex(url: string) {
-	const client = new ConvexClient(url);
-	setContext(CONVEX_KEY, client);
+	if (!client) {
+		client = new ConvexClient(url);
+	}
 	return client;
 }
 
-export function getConvexClient(): ConvexClient {
-	return getContext(CONVEX_KEY);
+export function getConvexClient() {
+	if (!client) {
+		throw new Error('Convex client not initialized. Call initConvex first.');
+	}
+	return client;
 }
 
 export function useQuery<T>(query: any, args?: any) {
@@ -37,5 +40,51 @@ export function useMutation(mutation: any) {
 
 	return async (args: any) => {
 		return await client.mutation(mutation, args);
+	};
+}
+
+export function useAuthState() {
+	const client = getConvexClient();
+	let userId = $state<string | null>(null);
+	let isLoading = $state(true);
+
+	$effect(() => {
+		const checkAuth = async () => {
+			try {
+				const id = await client.query('auth:getUserId' as any, {});
+				userId = id;
+			} catch (e) {
+				userId = null;
+			} finally {
+				isLoading = false;
+			}
+		};
+
+		checkAuth();
+
+		// Re-check periodically
+		const interval = setInterval(checkAuth, 5000);
+		return () => clearInterval(interval);
+	});
+
+	return {
+		get userId() {
+			return userId;
+		},
+		get isLoading() {
+			return isLoading;
+		},
+		get isAuthenticated() {
+			return !!userId;
+		}
+	};
+}
+
+export function useAuthActions() {
+	const client = getConvexClient();
+
+	return {
+		signIn: (args: any) => client.action('auth:signIn' as any, args),
+		signOut: () => client.action('auth:signOut' as any, {}),
 	};
 }

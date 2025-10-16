@@ -7,6 +7,7 @@ export const create = mutation({
     label: v.string(),
     url: v.string(),
     pingInterval: v.optional(v.number()),
+    excludeFromUptime: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     return await ctx.db.insert("serviceUrls", {
@@ -14,6 +15,7 @@ export const create = mutation({
       label: args.label,
       url: args.url,
       pingInterval: args.pingInterval,
+      excludeFromUptime: args.excludeFromUptime,
     });
   },
 });
@@ -24,6 +26,7 @@ export const update = mutation({
     label: v.string(),
     url: v.string(),
     pingInterval: v.optional(v.number()),
+    excludeFromUptime: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const { id, ...updates } = args;

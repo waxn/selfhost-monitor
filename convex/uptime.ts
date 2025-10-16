@@ -15,9 +15,14 @@ export const checkUrl = internalAction({
     let error: string | undefined;
 
     try {
+      // Try GET request first for better compatibility with Cloudflare tunnels and reverse proxies
       const response = await fetch(url.url, {
-        method: "HEAD",
+        method: "GET",
         signal: AbortSignal.timeout(10000), // 10 second timeout
+        headers: {
+          "User-Agent": "ServiceMonitor/1.0",
+        },
+        redirect: "follow", // Follow redirects
       });
 
       isUp = response.ok;
@@ -48,6 +53,9 @@ export const checkAllUrls = internalAction({
     // Filter URLs that need to be checked based on their interval
     const urlsToCheck = [];
     for (const url of urls) {
+      // Skip if excluded from uptime monitoring
+      if (url.excludeFromUptime) continue;
+
       const lastCheck = await ctx.runQuery(internal.uptime.getLastCheck, { urlId: url._id });
       const interval = (url.pingInterval ?? 5) * 60 * 1000; // convert minutes to ms
 

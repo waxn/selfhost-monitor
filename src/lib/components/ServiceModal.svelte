@@ -16,6 +16,8 @@
 				_id: Id<'serviceUrls'>;
 				label: string;
 				url: string;
+				pingInterval?: number;
+				excludeFromUptime?: boolean;
 			}>;
 		} | null;
 	}
@@ -33,7 +35,7 @@
 	let notes = $state('');
 	let deviceId = $state<Id<'devices'> | ''>('');
 	let iconUrl = $state('');
-	let urls = $state<Array<{ id?: Id<'serviceUrls'>; label: string; url: string; pingInterval?: number }>>([]);
+	let urls = $state<Array<{ id?: Id<'serviceUrls'>; label: string; url: string; pingInterval?: number; excludeFromUptime?: boolean }>>([]);
 
 	$effect(() => {
 		if (isOpen) {
@@ -42,7 +44,7 @@
 				notes = editingService.notes || '';
 				deviceId = editingService.deviceId;
 				iconUrl = editingService.iconUrl || '';
-				urls = editingService.urls.map((u) => ({ id: u._id, label: u.label, url: u.url, pingInterval: u.pingInterval ?? 5 }));
+				urls = editingService.urls.map((u) => ({ id: u._id, label: u.label, url: u.url, pingInterval: u.pingInterval ?? 5, excludeFromUptime: u.excludeFromUptime ?? false }));
 			} else {
 				name = '';
 				notes = '';
@@ -54,7 +56,7 @@
 	});
 
 	function addUrl() {
-		urls = [...urls, { label: '', url: '', pingInterval: 5 }];
+		urls = [...urls, { label: '', url: '', pingInterval: 5, excludeFromUptime: false }];
 	}
 
 	function removeUrlAtIndex(index: number) {
@@ -104,13 +106,14 @@
 				for (const url of urls) {
 					const normalizedUrl = normalizeUrl(url.url);
 					if (url.id) {
-						await updateUrl({ id: url.id, label: url.label, url: normalizedUrl, pingInterval: url.pingInterval });
+						await updateUrl({ id: url.id, label: url.label, url: normalizedUrl, pingInterval: url.pingInterval, excludeFromUptime: url.excludeFromUptime });
 					} else {
 						await createUrl({
 							serviceId: editingService._id,
 							label: url.label,
 							url: normalizedUrl,
-							pingInterval: url.pingInterval
+							pingInterval: url.pingInterval,
+							excludeFromUptime: url.excludeFromUptime
 						});
 					}
 				}
@@ -129,7 +132,8 @@
 						serviceId,
 						label: url.label,
 						url: normalizedUrl,
-						pingInterval: url.pingInterval
+						pingInterval: url.pingInterval,
+						excludeFromUptime: url.excludeFromUptime
 					});
 				}
 			}
@@ -196,6 +200,7 @@
 							<span class="header-label">Label</span>
 							<span class="header-url">URL</span>
 							<span class="header-interval">Min</span>
+							<span class="header-skip">Skip</span>
 							<span class="header-action"></span>
 						</div>
 					{/if}
@@ -205,6 +210,7 @@
 							<input type="text" bind:value={url.label} placeholder="Local" class="url-label" />
 							<input type="text" bind:value={url.url} placeholder="youtube.com or 192.168.1.100:8080" class="url-input" />
 							<input type="number" bind:value={url.pingInterval} placeholder="5" min="1" class="url-interval" />
+							<input type="checkbox" bind:checked={url.excludeFromUptime} class="url-skip" title="Exclude from uptime monitoring" />
 							<button type="button" onclick={() => removeUrlAtIndex(i)} class="remove-btn">×</button>
 						</div>
 					{/each}
@@ -328,6 +334,11 @@
 		text-align: center;
 	}
 
+	.header-skip {
+		flex: 0 0 30px;
+		text-align: center;
+	}
+
 	.header-action {
 		width: 32px;
 	}
@@ -352,6 +363,42 @@
 	.url-interval {
 		flex: 0 0 60px;
 		min-width: 60px;
+	}
+
+	.url-skip {
+		flex: 0 0 30px;
+		width: 18px;
+		height: 18px;
+		cursor: pointer;
+		appearance: none;
+		-webkit-appearance: none;
+		-moz-appearance: none;
+		background: #2d3339;
+		border: 2px solid #3a3f47;
+		border-radius: 4px;
+		position: relative;
+		transition: all 0.2s;
+	}
+
+	.url-skip:hover {
+		border-color: #d35400;
+		box-shadow: 0 0 6px rgba(211, 84, 0, 0.3);
+	}
+
+	.url-skip:checked {
+		background: linear-gradient(135deg, #d35400 0%, #c54d00 100%);
+		border-color: #d35400;
+	}
+
+	.url-skip:checked::after {
+		content: '✓';
+		position: absolute;
+		color: white;
+		font-size: 14px;
+		font-weight: bold;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
 	}
 
 	.add-url-btn {

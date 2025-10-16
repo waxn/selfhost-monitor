@@ -1,9 +1,18 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { getAuthUserId } from "@convex-dev/auth/server";
 
 export const list = query({
   handler: async (ctx) => {
-    const services = await ctx.db.query("services").collect();
+    const userId = await getAuthUserId(ctx);
+
+    // Get all services (for backwards compatibility)
+    const allServices = await ctx.db.query("services").collect();
+
+    // Filter to user's services or services without a userId (legacy data)
+    const services = userId
+      ? allServices.filter(s => !s.userId || s.userId === userId)
+      : allServices;
 
     // Fetch related data for each service
     const servicesWithDetails = await Promise.all(
@@ -52,11 +61,14 @@ export const create = mutation({
     iconUrl: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+
     return await ctx.db.insert("services", {
       name: args.name,
       notes: args.notes,
       deviceId: args.deviceId,
       iconUrl: args.iconUrl,
+      userId: userId || undefined,
     });
   },
 });
@@ -70,6 +82,14 @@ export const update = mutation({
     iconUrl: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    const service = await ctx.db.get(args.id);
+
+    // Check authorization only if both user and service have userId
+    if (userId && service?.userId && service.userId !== userId) {
+      throw new Error("Not authorized");
+    }
+
     const { id, ...updates } = args;
     await ctx.db.patch(id, updates);
   },
@@ -78,6 +98,14 @@ export const update = mutation({
 export const remove = mutation({
   args: { id: v.id("services") },
   handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    const service = await ctx.db.get(args.id);
+
+    // Check authorization only if both user and service have userId
+    if (userId && service?.userId && service.userId !== userId) {
+      throw new Error("Not authorized");
+    }
+
     // Delete associated URLs
     const urls = await ctx.db
       .query("serviceUrls")
