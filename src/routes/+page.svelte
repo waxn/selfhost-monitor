@@ -1,24 +1,15 @@
 <script lang="ts">
-	import { useQuery, useMutation, useAuthState, useAuthActions } from '$lib/convex.svelte';
+	import { useQuery, useMutation } from '$lib/convex.svelte';
 	import { api } from '../../convex/_generated/api';
 	import ServiceCard from '$lib/components/ServiceCard.svelte';
 	import ServiceModal from '$lib/components/ServiceModal.svelte';
 	import DeviceModal from '$lib/components/DeviceModal.svelte';
 	import type { Id } from '../../convex/_generated/dataModel';
-	import { goto } from '$app/navigation';
 
 	const services = useQuery(api.services.list);
 	const devices = useQuery(api.devices.list);
 	const removeService = useMutation(api.services.remove);
 	const removeDevice = useMutation(api.devices.remove);
-
-	const auth = useAuthState();
-	const { signOut } = useAuthActions();
-
-	async function handleSignOut() {
-		await signOut();
-		window.location.reload();
-	}
 
 	let showServiceModal = $state(false);
 	let showDeviceModal = $state(false);
@@ -75,11 +66,6 @@
 			<div class="header-actions">
 				<button onclick={openAddDevice} class="secondary-btn">+ Add Device</button>
 				<button onclick={openAddService} class="primary-btn">+ Add Service</button>
-				{#if auth.isAuthenticated}
-					<button onclick={handleSignOut} class="auth-btn">Sign Out</button>
-				{:else}
-					<a href="/login" class="auth-btn">Sign In</a>
-				{/if}
 			</div>
 		</div>
 	</header>
@@ -226,27 +212,6 @@
 		background: #2d3339;
 		border-color: #d35400;
 		box-shadow: 0 0 12px rgba(211, 84, 0, 0.3);
-	}
-
-	.auth-btn {
-		background: transparent;
-		border: 1px solid #3a3f47;
-		color: #a0a4a8;
-		padding: 10px 20px;
-		border-radius: 8px;
-		font-size: 14px;
-		font-weight: 500;
-		cursor: pointer;
-		transition: all 0.2s;
-		text-decoration: none;
-		display: inline-flex;
-		align-items: center;
-	}
-
-	.auth-btn:hover {
-		background: #2d3339;
-		border-color: #d35400;
-		color: #d35400;
 	}
 
 	.devices-section {

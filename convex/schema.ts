@@ -1,23 +1,18 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
-import { authTables } from "@convex-dev/auth/server";
 
 export default defineSchema({
-  ...authTables,
-
   devices: defineTable({
     name: v.string(),
     description: v.optional(v.string()),
-    userId: v.optional(v.id("users")),
-  }).index("by_user", ["userId"]),
+  }),
 
   services: defineTable({
     name: v.string(),
     notes: v.optional(v.string()),
     deviceId: v.id("devices"),
     iconUrl: v.optional(v.string()),
-    userId: v.optional(v.id("users")),
-  }).index("by_user", ["userId"]),
+  }),
 
   serviceUrls: defineTable({
     serviceId: v.id("services"),

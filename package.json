@@ -21,10 +21,7 @@
 		"vite": "^7.1.7"
 	},
 	"dependencies": {
-		"@auth/core": "^0.41.0",
-		"@convex-dev/auth": "^0.0.72",
 		"convex": "^1.28.0",
-		"convex-svelte": "^0.0.11",
-		"oauth4webapi": "^3.8.2"
+		"convex-svelte": "^0.0.11"
 	}
 }
