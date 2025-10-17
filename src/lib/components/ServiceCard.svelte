@@ -70,7 +70,11 @@
 
 	<div class="service-icon">
 		{#if service.iconUrl}
-			<img src={service.iconUrl} alt={service.name} />
+			{#if service.iconUrl.startsWith('<svg')}
+				{@html service.iconUrl}
+			{:else}
+				<img src={service.iconUrl} alt={service.name} />
+			{/if}
 		{:else}
 			<div class="placeholder-icon">{service.name.charAt(0).toUpperCase()}</div>
 		{/if}
@@ -191,12 +195,21 @@
 		border-radius: 12px;
 		overflow: hidden;
 		background: #2d3339;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 8px;
 	}
 
 	.service-icon img {
-		width: 100%;
-		height: 100%;
-		object-fit: cover;
+		max-width: 100%;
+		max-height: 100%;
+		object-fit: contain;
+	}
+
+	.service-icon :global(svg) {
+		max-width: 100%;
+		max-height: 100%;
 	}
 
 	.placeholder-icon {

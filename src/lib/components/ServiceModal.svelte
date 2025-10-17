@@ -149,6 +149,30 @@
 			onClose();
 		}
 	}
+
+	function handleFileUpload(e: Event) {
+		const input = e.target as HTMLInputElement;
+		const file = input.files?.[0];
+		if (!file) return;
+
+		const reader = new FileReader();
+		reader.onload = (e) => {
+			const result = e.target?.result as string;
+			if (file.type === 'image/svg+xml') {
+				// Store SVG as text
+				iconUrl = result;
+			} else {
+				// Convert other images to data URL
+				iconUrl = result;
+			}
+		};
+
+		if (file.type === 'image/svg+xml') {
+			reader.readAsText(file);
+		} else {
+			reader.readAsDataURL(file);
+		}
+	}
 </script>
 
 {#if isOpen}
@@ -175,13 +199,34 @@
 				</div>
 
 				<div class="form-group">
-					<label for="iconUrl">Icon URL</label>
-					<input
-						id="iconUrl"
-						type="url"
-						bind:value={iconUrl}
-						placeholder="https://example.com/icon.png"
-					/>
+					<label for="iconUrl">Icon (URL or upload SVG/PNG)</label>
+					<div class="icon-input-group">
+						<input
+							id="iconUrl"
+							type="text"
+							bind:value={iconUrl}
+							placeholder="https://example.com/icon.png or paste SVG code"
+						/>
+						<label for="iconUpload" class="upload-btn">
+							Upload
+							<input
+								id="iconUpload"
+								type="file"
+								accept="image/svg+xml,image/png,image/jpg,image/jpeg,image/webp"
+								onchange={handleFileUpload}
+								style="display: none;"
+							/>
+						</label>
+					</div>
+					{#if iconUrl && (iconUrl.startsWith('<svg') || iconUrl.startsWith('data:image'))}
+						<div class="icon-preview">
+							{#if iconUrl.startsWith('<svg')}
+								{@html iconUrl}
+							{:else}
+								<img src={iconUrl} alt="Icon preview" />
+							{/if}
+						</div>
+					{/if}
 				</div>
 
 				<div class="form-group">
@@ -399,6 +444,59 @@
 		top: 50%;
 		left: 50%;
 		transform: translate(-50%, -50%);
+	}
+
+	.icon-input-group {
+		display: flex;
+		gap: 8px;
+		align-items: center;
+	}
+
+	.icon-input-group input[type="text"] {
+		flex: 1;
+	}
+
+	.upload-btn {
+		background: transparent;
+		border: 1px solid #3a3f47;
+		color: #d35400;
+		padding: 10px 16px;
+		border-radius: 8px;
+		cursor: pointer;
+		font-size: 14px;
+		font-weight: 500;
+		transition: all 0.2s;
+		white-space: nowrap;
+	}
+
+	.upload-btn:hover {
+		background: rgba(211, 84, 0, 0.1);
+		border-color: #d35400;
+		box-shadow: 0 0 8px rgba(211, 84, 0, 0.3);
+	}
+
+	.icon-preview {
+		margin-top: 8px;
+		width: 64px;
+		height: 64px;
+		background: #2d3339;
+		border: 1px solid #3a3f47;
+		border-radius: 8px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 8px;
+	}
+
+	.icon-preview :global(svg) {
+		max-width: 100%;
+		max-height: 100%;
+	}
+
+	.icon-preview img {
+		max-width: 100%;
+		max-height: 100%;
+		object-fit: contain;
 	}
 
 	.add-url-btn {
