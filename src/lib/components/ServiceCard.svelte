@@ -90,7 +90,7 @@
 		<p class="notes">{service.notes}</p>
 	{/if}
 
-	{#if service.urls.length > 0}
+	{#if service.urls && service.urls.length > 0}
 		<div class="url-buttons">
 			{#each service.urls as urlData}
 				<button

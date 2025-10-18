@@ -41,6 +41,7 @@ export const checkUrl = internalAction({
       responseTime,
       statusCode,
       error,
+      userId: url.userId,
     });
   },
 });
@@ -105,9 +106,13 @@ export const recordCheck = internalMutation({
     responseTime: v.optional(v.number()),
     statusCode: v.optional(v.number()),
     error: v.optional(v.string()),
+    userId: v.optional(v.id("users")),
   },
   handler: async (ctx, args) => {
-    await ctx.db.insert("uptimeChecks", args);
+    if (!args.userId) {
+      throw new Error("userId is required for uptime checks");
+    }
+    await ctx.db.insert("uptimeChecks", args as any);
   },
 });
 
@@ -115,8 +120,14 @@ export const getRecentChecks = query({
   args: {
     serviceUrlId: v.id("serviceUrls"),
     limit: v.optional(v.number()),
+    userId: v.id("users"),
   },
   handler: async (ctx, args) => {
+    // Check ownership of the URL
+    const url = await ctx.db.get(args.serviceUrlId);
+    if (!url || url.userId !== args.userId) {
+      throw new Error("Unauthorized");
+    }
     const limit = args.limit ?? 100;
     return await ctx.db
       .query("uptimeChecks")

@@ -5,29 +5,44 @@ export default defineSchema({
   devices: defineTable({
     name: v.string(),
     description: v.optional(v.string()),
-  }),
+    userId: v.optional(v.id("users")),
+  }).index("by_user", ["userId"]),
 
   services: defineTable({
     name: v.string(),
     notes: v.optional(v.string()),
     deviceId: v.id("devices"),
     iconUrl: v.optional(v.string()),
-  }),
+    userId: v.optional(v.id("users")),
+  }).index("by_user", ["userId"]),
 
   serviceUrls: defineTable({
     serviceId: v.id("services"),
-    label: v.string(), // e.g., "Local", "Web", "API"
+    label: v.string(),
     url: v.string(),
-    pingInterval: v.optional(v.number()), // in minutes, defaults to 5
-    excludeFromUptime: v.optional(v.boolean()), // if true, don't ping this URL
-  }).index("by_service", ["serviceId"]),
+    pingInterval: v.optional(v.number()),
+    excludeFromUptime: v.optional(v.boolean()),
+    userId: v.optional(v.id("users")),
+  }).index("by_service", ["serviceId"]).index("by_user", ["userId"]),
 
   uptimeChecks: defineTable({
     serviceUrlId: v.id("serviceUrls"),
     timestamp: v.number(),
     isUp: v.boolean(),
-    responseTime: v.optional(v.number()), // in ms
+    responseTime: v.optional(v.number()),
     statusCode: v.optional(v.number()),
     error: v.optional(v.string()),
-  }).index("by_url", ["serviceUrlId", "timestamp"]),
+    userId: v.optional(v.id("users")),
+  }).index("by_url", ["serviceUrlId", "timestamp"]).index("by_user", ["userId"]),
+
+  // Lightweight users table for simple auth demo
+  users: defineTable({
+    // Make fields optional so existing user documents (e.g. with only email)
+    // will pass validation. For production, tune the schema to your needs.
+    name: v.optional(v.string()),
+    email: v.optional(v.string()),
+    createdAt: v.optional(v.number()),
+    // store password hash (serialized salt:key) for password auth
+    passwordHash: v.optional(v.string()),
+  }).index("by_name", ["name"]).index("by_email", ["email"]),
 });

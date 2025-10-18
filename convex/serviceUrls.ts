@@ -8,15 +8,10 @@ export const create = mutation({
     url: v.string(),
     pingInterval: v.optional(v.number()),
     excludeFromUptime: v.optional(v.boolean()),
+    userId: v.id("users"),
   },
   handler: async (ctx, args) => {
-    return await ctx.db.insert("serviceUrls", {
-      serviceId: args.serviceId,
-      label: args.label,
-      url: args.url,
-      pingInterval: args.pingInterval,
-      excludeFromUptime: args.excludeFromUptime,
-    });
+    return await ctx.db.insert("serviceUrls", args);
   },
 });
 
@@ -27,16 +22,27 @@ export const update = mutation({
     url: v.string(),
     pingInterval: v.optional(v.number()),
     excludeFromUptime: v.optional(v.boolean()),
+    userId: v.id("users"),
   },
   handler: async (ctx, args) => {
-    const { id, ...updates } = args;
+    const { id, userId, ...updates } = args;
+    // Check ownership
+    const url = await ctx.db.get(id);
+    if (!url || (url.userId && url.userId !== userId)) {
+      throw new Error("Unauthorized");
+    }
     await ctx.db.patch(id, updates);
   },
 });
 
 export const remove = mutation({
-  args: { id: v.id("serviceUrls") },
+  args: { id: v.id("serviceUrls"), userId: v.id("users") },
   handler: async (ctx, args) => {
+    // Check ownership
+    const url = await ctx.db.get(args.id);
+    if (!url || (url.userId && url.userId !== args.userId)) {
+      throw new Error("Unauthorized");
+    }
     // Delete uptime checks for this URL
     const checks = await ctx.db
       .query("uptimeChecks")

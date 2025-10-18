@@ -2,45 +2,43 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 
 export const list = query({
-  handler: async (ctx) => {
-    const services = await ctx.db.query("services").collect();
+  args: { userId: v.optional(v.id("users")) },
+  handler: async (ctx, args) => {
+    if (!args.userId) return [];
+    const services = await ctx.db.query("services").withIndex("by_user", (q) => q.eq("userId", args.userId)).collect();
 
-    // Fetch related data for each service
-    const servicesWithDetails = await Promise.all(
-      services.map(async (service) => {
-        const device = await ctx.db.get(service.deviceId);
-        const urls = await ctx.db
-          .query("serviceUrls")
-          .withIndex("by_service", (q) => q.eq("serviceId", service._id))
-          .collect();
+    // Populate device and urls for each service
+    return await Promise.all(services.map(async (service) => {
+      const device = service.deviceId ? await ctx.db.get(service.deviceId) : null;
+      const urls = await ctx.db
+        .query("serviceUrls")
+        .withIndex("by_service", (q) => q.eq("serviceId", service._id))
+        .collect();
 
-        // Get latest uptime status for each URL
-        const urlsWithStatus = await Promise.all(
-          urls.map(async (url) => {
-            const latestCheck = await ctx.db
-              .query("uptimeChecks")
-              .withIndex("by_url", (q) => q.eq("serviceUrlId", url._id))
-              .order("desc")
-              .first();
-
-            return {
-              ...url,
-              isUp: latestCheck?.isUp ?? null,
-              lastCheck: latestCheck?.timestamp ?? null,
-              responseTime: latestCheck?.responseTime ?? null,
-            };
-          })
-        );
+      // Get latest uptime check for each URL
+      const urlsWithStatus = await Promise.all(urls.map(async (url) => {
+        const latestCheck = await ctx.db
+          .query("uptimeChecks")
+          .withIndex("by_url", (q) => q.eq("serviceUrlId", url._id))
+          .order("desc")
+          .first();
 
         return {
-          ...service,
-          device,
-          urls: urlsWithStatus,
+          _id: url._id,
+          label: url.label,
+          url: url.url,
+          isUp: latestCheck?.isUp ?? null,
+          lastCheck: latestCheck?.timestamp ?? null,
+          responseTime: latestCheck?.responseTime ?? null,
         };
-      })
-    );
+      }));
 
-    return servicesWithDetails;
+      return {
+        ...service,
+        device: device ? { name: device.name } : null,
+        urls: urlsWithStatus,
+      };
+    }));
   },
 });
 
@@ -50,14 +48,10 @@ export const create = mutation({
     notes: v.optional(v.string()),
     deviceId: v.id("devices"),
     iconUrl: v.optional(v.string()),
+    userId: v.id("users"),
   },
   handler: async (ctx, args) => {
-    return await ctx.db.insert("services", {
-      name: args.name,
-      notes: args.notes,
-      deviceId: args.deviceId,
-      iconUrl: args.iconUrl,
-    });
+    return await ctx.db.insert("services", args);
   },
 });
 
@@ -68,24 +62,33 @@ export const update = mutation({
     notes: v.optional(v.string()),
     deviceId: v.id("devices"),
     iconUrl: v.optional(v.string()),
+    userId: v.id("users"),
   },
   handler: async (ctx, args) => {
-    const { id, ...updates } = args;
+    const { id, userId, ...updates } = args;
+    // Check ownership
+    const service = await ctx.db.get(id);
+    if (!service || (service.userId && service.userId !== userId)) {
+      throw new Error("Unauthorized");
+    }
     await ctx.db.patch(id, updates);
   },
 });
 
 export const remove = mutation({
-  args: { id: v.id("services") },
+  args: { id: v.id("services"), userId: v.id("users") },
   handler: async (ctx, args) => {
-    // Delete associated URLs
+    // Check ownership
+    const service = await ctx.db.get(args.id);
+    if (!service || (service.userId && service.userId !== args.userId)) {
+      throw new Error("Unauthorized");
+    }
     const urls = await ctx.db
       .query("serviceUrls")
       .withIndex("by_service", (q) => q.eq("serviceId", args.id))
       .collect();
 
     for (const url of urls) {
-      // Delete uptime checks for this URL
       const checks = await ctx.db
         .query("uptimeChecks")
         .withIndex("by_url", (q) => q.eq("serviceUrlId", url._id))

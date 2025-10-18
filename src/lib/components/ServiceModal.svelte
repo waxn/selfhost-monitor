@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { useMutation, useQuery } from '$lib/convex.svelte';
+	import { useMutation, useQuery, getCurrentUser } from '$lib/convex.svelte';
 	import { api } from '../../../convex/_generated/api';
 	import type { Id } from '../../../convex/_generated/dataModel';
 
@@ -24,7 +24,14 @@
 
 	let { isOpen, onClose, editingService = null }: Props = $props();
 
-	const devices = useQuery(api.devices.list);
+	let currentUser = $state<any>(null);
+
+	// Get current user reactively
+	$effect(() => {
+		getCurrentUser().then(user => currentUser = user);
+	});
+
+	const devices = useQuery(api.devices.list, () => currentUser ? { userId: currentUser._id } : {});
 	const createService = useMutation(api.services.create);
 	const updateService = useMutation(api.services.update);
 	const createUrl = useMutation(api.serviceUrls.create);
@@ -79,16 +86,21 @@
 	}
 
 	async function handleSubmit() {
-		if (!name || !deviceId) return;
+		if (!name || !deviceId || !currentUser) {
+			console.log('Missing required fields:', { name, deviceId, currentUser });
+			return;
+		}
 
 		try {
+			console.log('Submitting service with userId:', currentUser._id);
 			if (editingService) {
 				await updateService({
 					id: editingService._id,
 					name,
 					notes: notes || undefined,
 					deviceId: deviceId as Id<'devices'>,
-					iconUrl: iconUrl || undefined
+					iconUrl: iconUrl || undefined,
+					userId: currentUser._id
 				});
 
 				// Handle URLs
@@ -98,7 +110,7 @@
 				// Delete removed URLs
 				for (const url of editingService.urls) {
 					if (!currentUrlIds.has(url._id)) {
-						await removeUrl({ id: url._id });
+						await removeUrl({ id: url._id, userId: currentUser._id });
 					}
 				}
 
@@ -106,7 +118,7 @@
 				for (const url of urls) {
 					const normalizedUrl = normalizeUrl(url.url);
 					if (url.id) {
-						await updateUrl({ id: url.id, label: url.label, url: normalizedUrl, pingInterval: url.pingInterval, excludeFromUptime: url.excludeFromUptime });
+						await updateUrl({ id: url.id, label: url.label, url: normalizedUrl, pingInterval: url.pingInterval, excludeFromUptime: url.excludeFromUptime, userId: currentUser._id });
 					} else {
 						await createUrl({
 							serviceId: editingService._id,
@@ -122,7 +134,8 @@
 					name,
 					notes: notes || undefined,
 					deviceId: deviceId as Id<'devices'>,
-					iconUrl: iconUrl || undefined
+					iconUrl: iconUrl || undefined,
+					userId: currentUser._id
 				});
 
 				// Create URLs
@@ -133,7 +146,8 @@
 						label: url.label,
 						url: normalizedUrl,
 						pingInterval: url.pingInterval,
-						excludeFromUptime: url.excludeFromUptime
+						excludeFromUptime: url.excludeFromUptime,
+						userId: currentUser._id
 					});
 				}
 			}
@@ -141,6 +155,7 @@
 			onClose();
 		} catch (error) {
 			console.error('Failed to save service:', error);
+			alert('Failed to save service: ' + (error instanceof Error ? error.message : String(error)));
 		}
 	}
 

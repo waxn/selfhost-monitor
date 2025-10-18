@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { useMutation } from '$lib/convex.svelte';
+	import { useMutation, getCurrentUser } from '$lib/convex.svelte';
 	import { api } from '../../../convex/_generated/api';
 	import type { Id } from '../../../convex/_generated/dataModel';
 
@@ -14,6 +14,13 @@
 	}
 
 	let { isOpen, onClose, editingDevice = null }: Props = $props();
+
+	let currentUser = $state<any>(null);
+
+	// Get current user reactively
+	$effect(() => {
+		getCurrentUser().then(user => currentUser = user);
+	});
 
 	const createDevice = useMutation(api.devices.create);
 	const updateDevice = useMutation(api.devices.update);
@@ -34,25 +41,32 @@
 	});
 
 	async function handleSubmit() {
-		if (!name) return;
+		if (!name || !currentUser) {
+			console.log('Missing name or currentUser:', { name, currentUser });
+			return;
+		}
 
 		try {
+			console.log('Submitting device with userId:', currentUser._id);
 			if (editingDevice) {
 				await updateDevice({
 					id: editingDevice._id,
 					name,
-					description: description || undefined
+					description: description || undefined,
+					userId: currentUser._id
 				});
 			} else {
 				await createDevice({
 					name,
-					description: description || undefined
+					description: description || undefined,
+					userId: currentUser._id
 				});
 			}
 
 			onClose();
 		} catch (error) {
 			console.error('Failed to save device:', error);
+			alert('Failed to save device: ' + (error instanceof Error ? error.message : String(error)));
 		}
 	}
 
