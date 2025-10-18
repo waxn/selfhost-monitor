@@ -19,19 +19,19 @@
 
 	const features = [
 		{
-			icon: '🚀',
-			title: 'Real-time Monitoring',
-			description: 'Track your services and devices with instant updates and status checks'
+			icon: '📡',
+			title: 'Device Organization',
+			description: 'Group your services by device or server for easy management and monitoring'
 		},
 		{
-			icon: '📊',
-			title: 'Uptime Analytics',
-			description: 'Comprehensive uptime tracking and performance metrics for all your endpoints'
+			icon: '🔗',
+			title: 'Multiple Endpoints',
+			description: 'Monitor multiple URLs per service with custom labels and ping intervals'
 		},
 		{
-			icon: '🔔',
-			title: 'Smart Alerts',
-			description: 'Get notified instantly when your services go down or performance degrades'
+			icon: '⚡',
+			title: 'Live Status Tracking',
+			description: 'See real-time status indicators and response times for all your endpoints'
 		}
 	];
 </script>
@@ -54,7 +54,7 @@
 			<p class="tagline">Keep your self-hosted services running smoothly</p>
 
 			<p class="description">
-				Monitor uptime, track performance, and stay informed about your infrastructure—all in one
+				Organize your services by device, monitor multiple endpoints, and track their status—all in one
 				beautiful dashboard.
 			</p>
 
@@ -109,18 +109,18 @@
 	<section class="stats">
 		<div class="stats-content">
 			<div class="stat-item">
-				<div class="stat-number">99.9%</div>
-				<div class="stat-label">Monitoring Accuracy</div>
+				<div class="stat-number">Unlimited</div>
+				<div class="stat-label">Devices & Services</div>
 			</div>
 			<div class="stat-divider"></div>
 			<div class="stat-item">
-				<div class="stat-number">&lt;1s</div>
-				<div class="stat-label">Alert Response Time</div>
+				<div class="stat-number">Multiple</div>
+				<div class="stat-label">URLs Per Service</div>
 			</div>
 			<div class="stat-divider"></div>
 			<div class="stat-item">
-				<div class="stat-number">24/7</div>
-				<div class="stat-label">Continuous Monitoring</div>
+				<div class="stat-number">Real-time</div>
+				<div class="stat-label">Status Updates</div>
 			</div>
 		</div>
 	</section>
@@ -132,41 +132,91 @@
 				<div class="benefit-visual">
 					<div class="dashboard-preview">
 						<div class="preview-header">
-							<div class="preview-dot"></div>
-							<div class="preview-dot"></div>
-							<div class="preview-dot"></div>
+							<div class="preview-title">Service Monitor</div>
+							<div class="preview-buttons">
+								<div class="preview-btn small"></div>
+								<div class="preview-btn"></div>
+							</div>
 						</div>
-						<div class="preview-content">
-							<div class="preview-card card-1"></div>
-							<div class="preview-card card-2"></div>
-							<div class="preview-card card-3"></div>
+						<div class="devices-preview">
+							<div class="device-card">
+								<div class="device-name">Home Server</div>
+								<div class="device-desc">Main infrastructure</div>
+							</div>
+							<div class="device-card">
+								<div class="device-name">VPS-01</div>
+								<div class="device-desc">Cloud services</div>
+							</div>
+						</div>
+						<div class="services-preview">
+							<div class="service-card-preview">
+								<div class="service-icon-small">N</div>
+								<div class="service-name">Nextcloud</div>
+								<div class="url-status up"></div>
+								<div class="url-status up"></div>
+							</div>
+							<div class="service-card-preview">
+								<div class="service-icon-small">P</div>
+								<div class="service-name">Plex</div>
+								<div class="url-status up"></div>
+							</div>
+							<div class="service-card-preview">
+								<div class="service-icon-small">G</div>
+								<div class="service-name">GitLab</div>
+								<div class="url-status down"></div>
+								<div class="url-status up"></div>
+							</div>
 						</div>
 					</div>
 				</div>
 				<div class="benefit-text">
 					<h3>Beautiful Dashboard</h3>
 					<p>
-						Organize your services by device, view detailed uptime statistics, and manage everything
-						from one intuitive interface.
+						Organize your services by device, add custom icons, and manage everything
+						from one intuitive interface with real-time status indicators.
 					</p>
 				</div>
 			</div>
 
 			<div class="benefit-item reverse">
 				<div class="benefit-visual">
-					<div class="uptime-graph">
-						<div class="graph-bars">
-							{#each Array(12) as _, i}
-								<div class="graph-bar" style="height: {60 + Math.random() * 40}%"></div>
-							{/each}
+					<div class="endpoint-preview">
+						<div class="endpoint-header">
+							<div class="endpoint-title">Service Endpoints</div>
+						</div>
+						<div class="endpoint-list">
+							<div class="endpoint-item">
+								<div class="endpoint-status-dot up"></div>
+								<div class="endpoint-info">
+									<div class="endpoint-label">Web Interface</div>
+									<div class="endpoint-url">https://cloud.example.com</div>
+								</div>
+								<div class="endpoint-time">45ms</div>
+							</div>
+							<div class="endpoint-item">
+								<div class="endpoint-status-dot up"></div>
+								<div class="endpoint-info">
+									<div class="endpoint-label">API</div>
+									<div class="endpoint-url">https://api.example.com</div>
+								</div>
+								<div class="endpoint-time">23ms</div>
+							</div>
+							<div class="endpoint-item">
+								<div class="endpoint-status-dot down"></div>
+								<div class="endpoint-info">
+									<div class="endpoint-label">Admin Panel</div>
+									<div class="endpoint-url">https://admin.example.com</div>
+								</div>
+								<div class="endpoint-time">—</div>
+							</div>
 						</div>
 					</div>
 				</div>
 				<div class="benefit-text">
-					<h3>Detailed Analytics</h3>
+					<h3>Multiple Endpoints</h3>
 					<p>
-						Track response times, uptime percentages, and historical data to understand your
-						service performance over time.
+						Monitor multiple URLs for each service with custom labels, view response times,
+						and quickly identify which endpoints are up or down.
 					</p>
 				</div>
 			</div>
@@ -207,7 +257,7 @@
 				<span>SelfHost Monitor</span>
 			</div>
 			<div class="footer-text">
-				Keep your self-hosted services running smoothly with real-time monitoring and analytics.
+				Organize and monitor your self-hosted services with real-time status tracking.
 			</div>
 		</div>
 	</footer>
@@ -623,89 +673,222 @@
 
 	.dashboard-preview {
 		width: 100%;
-		max-width: 400px;
-		background: rgba(255, 255, 255, 0.02);
-		border: 1px solid rgba(255, 255, 255, 0.05);
+		max-width: 500px;
+		background: #1e2329;
+		border: 1px solid #3a3f47;
 		border-radius: 16px;
-		padding: 16px;
+		padding: 20px;
 		backdrop-filter: blur(10px);
 	}
 
 	.preview-header {
 		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 20px;
+		padding-bottom: 12px;
+		border-bottom: 1px solid #3a3f47;
+	}
+
+	.preview-title {
+		font-size: 18px;
+		font-weight: 600;
+		color: #e8eaed;
+	}
+
+	.preview-buttons {
+		display: flex;
 		gap: 8px;
-		margin-bottom: 16px;
 	}
 
-	.preview-dot {
-		width: 12px;
-		height: 12px;
+	.preview-btn {
+		width: 80px;
+		height: 28px;
+		background: linear-gradient(135deg, #d35400 0%, #c54d00 100%);
+		border-radius: 6px;
+		opacity: 0.8;
+	}
+
+	.preview-btn.small {
+		width: 60px;
+		background: transparent;
+		border: 1px solid #3a3f47;
+	}
+
+	.devices-preview {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 12px;
+		margin-bottom: 20px;
+	}
+
+	.device-card {
+		background: #2d3339;
+		border: 1px solid #3a3f47;
+		border-radius: 10px;
+		padding: 12px;
+	}
+
+	.device-name {
+		font-size: 13px;
+		font-weight: 600;
+		color: #e8eaed;
+		margin-bottom: 4px;
+	}
+
+	.device-desc {
+		font-size: 11px;
+		color: #a0a4a8;
+	}
+
+	.services-preview {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: 12px;
+	}
+
+	.service-card-preview {
+		background: linear-gradient(145deg, #1e2329 0%, #1a1e24 100%);
+		border: 1px solid #3a3f47;
+		border-radius: 12px;
+		padding: 16px 12px;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 8px;
+	}
+
+	.service-icon-small {
+		width: 40px;
+		height: 40px;
+		background: linear-gradient(135deg, #d35400 0%, #c54d00 100%);
+		border-radius: 8px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 18px;
+		font-weight: bold;
+		color: white;
+	}
+
+	.service-name {
+		font-size: 12px;
+		font-weight: 600;
+		color: #e8eaed;
+	}
+
+	.url-status {
+		width: 100%;
+		height: 24px;
+		background: #2d3339;
+		border: 1px solid #3a3f47;
+		border-radius: 6px;
+		position: relative;
+	}
+
+	.url-status::before {
+		content: '';
+		position: absolute;
+		left: 6px;
+		top: 50%;
+		transform: translateY(-50%);
+		width: 6px;
+		height: 6px;
 		border-radius: 50%;
-		background: #3a3f47;
+		background: #6c757d;
 	}
 
-	.preview-content {
+	.url-status.up::before {
+		background: #229954;
+		box-shadow: 0 0 6px rgba(34, 153, 84, 0.6);
+	}
+
+	.url-status.down::before {
+		background: #c0392b;
+		box-shadow: 0 0 6px rgba(192, 57, 43, 0.6);
+	}
+
+	.endpoint-preview {
+		width: 100%;
+		max-width: 450px;
+		background: #1e2329;
+		border: 1px solid #3a3f47;
+		border-radius: 16px;
+		padding: 20px;
+		backdrop-filter: blur(10px);
+	}
+
+	.endpoint-header {
+		margin-bottom: 16px;
+		padding-bottom: 12px;
+		border-bottom: 1px solid #3a3f47;
+	}
+
+	.endpoint-title {
+		font-size: 16px;
+		font-weight: 600;
+		color: #e8eaed;
+	}
+
+	.endpoint-list {
 		display: flex;
 		flex-direction: column;
 		gap: 12px;
 	}
 
-	.preview-card {
-		height: 80px;
-		border-radius: 12px;
-		background: linear-gradient(135deg, rgba(211, 84, 0, 0.2) 0%, rgba(211, 84, 0, 0.05) 100%);
-		border: 1px solid rgba(211, 84, 0, 0.3);
-		animation: pulse 2s ease-in-out infinite;
-	}
-
-	.preview-card.card-2 {
-		animation-delay: 0.3s;
-	}
-
-	.preview-card.card-3 {
-		animation-delay: 0.6s;
-	}
-
-	@keyframes pulse {
-		0%,
-		100% {
-			opacity: 1;
-		}
-		50% {
-			opacity: 0.6;
-		}
-	}
-
-	.uptime-graph {
-		width: 100%;
-		max-width: 400px;
-		height: 200px;
-		background: rgba(255, 255, 255, 0.02);
-		border: 1px solid rgba(255, 255, 255, 0.05);
-		border-radius: 16px;
-		padding: 24px;
-		backdrop-filter: blur(10px);
-	}
-
-	.graph-bars {
-		height: 100%;
+	.endpoint-item {
+		background: #2d3339;
+		border: 1px solid #3a3f47;
+		border-radius: 10px;
+		padding: 14px;
 		display: flex;
-		align-items: flex-end;
-		justify-content: space-between;
-		gap: 8px;
+		align-items: center;
+		gap: 12px;
 	}
 
-	.graph-bar {
+	.endpoint-status-dot {
+		width: 10px;
+		height: 10px;
+		border-radius: 50%;
+		flex-shrink: 0;
+	}
+
+	.endpoint-status-dot.up {
+		background: #229954;
+		box-shadow: 0 0 8px rgba(34, 153, 84, 0.6);
+	}
+
+	.endpoint-status-dot.down {
+		background: #c0392b;
+		box-shadow: 0 0 8px rgba(192, 57, 43, 0.6);
+	}
+
+	.endpoint-info {
 		flex: 1;
-		background: linear-gradient(180deg, #d35400 0%, #c54d00 100%);
-		border-radius: 4px 4px 0 0;
-		animation: growBar 1s ease-out both;
+		min-width: 0;
 	}
 
-	@keyframes growBar {
-		from {
-			height: 0 !important;
-		}
+	.endpoint-label {
+		font-size: 13px;
+		font-weight: 600;
+		color: #e8eaed;
+		margin-bottom: 2px;
+	}
+
+	.endpoint-url {
+		font-size: 11px;
+		color: #6c757d;
+		font-family: monospace;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	.endpoint-time {
+		font-size: 12px;
+		color: #a0a4a8;
+		font-weight: 500;
+		flex-shrink: 0;
 	}
 
 	.benefit-text h3 {
@@ -830,6 +1013,19 @@
 
 		.final-cta h2 {
 			font-size: 36px;
+		}
+
+		.services-preview {
+			grid-template-columns: 1fr;
+		}
+
+		.devices-preview {
+			grid-template-columns: 1fr;
+		}
+
+		.dashboard-preview,
+		.endpoint-preview {
+			max-width: 100%;
 		}
 	}
 </style>

@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm create:*)",
+      "Bash(npx convex:*)",
+      "Bash(curl:*)",
+      "Bash(npm run check:*)",
+      "Bash(npm install:*)",
+      "Bash(npx @convex-dev/auth:*)",
+      "Read(//tmp/**)",
+      "Bash(npm uninstall @convex-dev/auth oauth4webapi @auth/core --legacy-peer-deps)",
+      "Bash(cat:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(npm run dev:*)",
+      "Read(//dev/pts/**)",
+      "WebSearch",
+      "WebFetch(domain:labs.convex.dev)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
