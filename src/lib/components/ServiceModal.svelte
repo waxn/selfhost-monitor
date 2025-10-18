@@ -125,7 +125,8 @@
 							label: url.label,
 							url: normalizedUrl,
 							pingInterval: url.pingInterval,
-							excludeFromUptime: url.excludeFromUptime
+							excludeFromUptime: url.excludeFromUptime,
+							userId: currentUser._id
 						});
 					}
 				}
