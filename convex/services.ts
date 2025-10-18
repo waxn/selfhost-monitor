@@ -17,6 +17,19 @@ export const list = query({
 
       // Get latest uptime check for each URL
       const urlsWithStatus = await Promise.all(urls.map(async (url) => {
+        // If excluded from uptime, return null for all status fields
+        if (url.excludeFromUptime) {
+          return {
+            _id: url._id,
+            label: url.label,
+            url: url.url,
+            isUp: null,
+            lastCheck: null,
+            responseTime: null,
+            excludeFromUptime: true,
+          };
+        }
+
         const latestCheck = await ctx.db
           .query("uptimeChecks")
           .withIndex("by_url", (q) => q.eq("serviceUrlId", url._id))
@@ -30,6 +43,7 @@ export const list = query({
           isUp: latestCheck?.isUp ?? null,
           lastCheck: latestCheck?.timestamp ?? null,
           responseTime: latestCheck?.responseTime ?? null,
+          excludeFromUptime: false,
         };
       }));
 

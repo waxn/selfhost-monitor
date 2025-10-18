@@ -15,6 +15,7 @@
 				isUp: boolean | null;
 				lastCheck: number | null;
 				responseTime: number | null;
+				excludeFromUptime?: boolean;
 			}>;
 		};
 		onEdit: () => void;
@@ -95,13 +96,14 @@
 			{#each service.urls as urlData}
 				<button
 					class="url-btn"
-					class:up={urlData.isUp === true}
-					class:down={urlData.isUp === false}
+					class:up={urlData.isUp === true && !urlData.excludeFromUptime}
+					class:down={urlData.isUp === false && !urlData.excludeFromUptime}
+					class:excluded={urlData.excludeFromUptime}
 					onclick={() => handleUrlClick(urlData.url)}
 				>
 					<span class="status-dot"></span>
 					{urlData.label}
-					{#if urlData.responseTime}
+					{#if urlData.responseTime && !urlData.excludeFromUptime}
 						<span class="response-time">{urlData.responseTime}ms</span>
 					{/if}
 				</button>
@@ -295,6 +297,11 @@
 	.url-btn.down .status-dot {
 		background: #c0392b;
 		box-shadow: 0 0 8px rgba(192, 57, 43, 0.6);
+	}
+
+	.url-btn.excluded .status-dot {
+		background: #6c757d;
+		box-shadow: none;
 	}
 
 	.response-time {
