@@ -259,6 +259,14 @@
 			<div class="footer-text">
 				Organize and monitor your self-hosted services with real-time status tracking.
 			</div>
+			<div class="footer-links">
+				<button onclick={() => goto('/terms')} class="footer-link">Terms of Service</button>
+				<span class="footer-divider">•</span>
+				<button onclick={() => goto('/privacy')} class="footer-link">Privacy Policy</button>
+			</div>
+			<div class="footer-copyright">
+				© {new Date().getFullYear()} SelfHost Monitor. All rights reserved.
+			</div>
 		</div>
 	</footer>
 </div>
@@ -981,6 +989,38 @@
 	.footer-text {
 		color: #6c757d;
 		font-size: 14px;
+		margin-bottom: 16px;
+	}
+
+	.footer-links {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 12px;
+		margin-bottom: 12px;
+	}
+
+	.footer-link {
+		background: transparent;
+		border: none;
+		color: #a0a4a8;
+		font-size: 14px;
+		cursor: pointer;
+		transition: color 0.2s;
+		padding: 0;
+	}
+
+	.footer-link:hover {
+		color: #d35400;
+	}
+
+	.footer-divider {
+		color: #3a3f47;
+	}
+
+	.footer-copyright {
+		color: #6c757d;
+		font-size: 13px;
 	}
 
 	/* Responsive */

@@ -61,6 +61,15 @@
 				<button class="link" on:click={() => { mode = 'login'; error = null; }}>Sign in</button>
 			{/if}
 		</div>
+
+		{#if mode === 'register'}
+			<div class="legal-notice">
+				By registering, you agree to our
+				<button class="legal-link" on:click={() => goto('/terms')}>Terms of Service</button>
+				and
+				<button class="legal-link" on:click={() => goto('/privacy')}>Privacy Policy</button>
+			</div>
+		{/if}
 	</div>
 </div>
 
@@ -130,5 +139,29 @@
 	.error {
 		color: #ff7b7b;
 		margin-bottom: 8px;
+	}
+
+	.legal-notice {
+		margin-top: 16px;
+		padding-top: 16px;
+		border-top: 1px solid #1b2430;
+		font-size: 12px;
+		color: #6c757d;
+		text-align: center;
+		line-height: 1.5;
+	}
+
+	.legal-link {
+		background: none;
+		border: none;
+		color: #d35400;
+		cursor: pointer;
+		text-decoration: underline;
+		padding: 0;
+		font-size: 12px;
+	}
+
+	.legal-link:hover {
+		color: #e67e22;
 	}
 </style>
