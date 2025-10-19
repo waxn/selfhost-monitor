@@ -1,12 +1,16 @@
 import { v } from "convex/values";
 import { action, internalAction, internalMutation, internalQuery, query } from "./_generated/server";
 import { internal } from "./_generated/api";
+import { decrypt } from "./encryption";
 
 export const checkUrl = internalAction({
   args: { urlId: v.id("serviceUrls") },
   handler: async (ctx, args) => {
     const url = await ctx.runQuery(internal.uptime.getUrl, { id: args.urlId });
     if (!url) return;
+
+    // Decrypt the URL before making the request
+    const decryptedUrl = (await decrypt(url.url)) || url.url;
 
     const startTime = Date.now();
     let isUp = false;
@@ -16,7 +20,7 @@ export const checkUrl = internalAction({
 
     try {
       // Try GET request first for better compatibility with Cloudflare tunnels and reverse proxies
-      const response = await fetch(url.url, {
+      const response = await fetch(decryptedUrl, {
         method: "GET",
         signal: AbortSignal.timeout(10000), // 10 second timeout
         headers: {

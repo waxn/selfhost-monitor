@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { encrypt, decrypt } from "./encryption";
 
 export const create = mutation({
   args: {
@@ -11,7 +12,12 @@ export const create = mutation({
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
-    return await ctx.db.insert("serviceUrls", args);
+    // Encrypt the URL before storing
+    const encryptedUrl = await encrypt(args.url);
+    return await ctx.db.insert("serviceUrls", {
+      ...args,
+      url: encryptedUrl || args.url, // Fallback to original if encryption fails
+    });
   },
 });
 
@@ -31,7 +37,12 @@ export const update = mutation({
     if (!url || (url.userId && url.userId !== userId)) {
       throw new Error("Unauthorized");
     }
-    await ctx.db.patch(id, updates);
+    // Encrypt the URL before storing
+    const encryptedUrl = await encrypt(updates.url);
+    await ctx.db.patch(id, {
+      ...updates,
+      url: encryptedUrl || updates.url, // Fallback to original if encryption fails
+    });
   },
 });
 
@@ -60,9 +71,17 @@ export const remove = mutation({
 export const listByService = query({
   args: { serviceId: v.id("services") },
   handler: async (ctx, args) => {
-    return await ctx.db
+    const urls = await ctx.db
       .query("serviceUrls")
-      .withIndex("by_service", (q) => q.eq("serviceId", args.serviceId))
+      .withIndex("by_service", (q: any) => q.eq("serviceId", args.serviceId))
       .collect();
+
+    // Decrypt URLs before returning
+    return await Promise.all(
+      urls.map(async (urlDoc) => ({
+        ...urlDoc,
+        url: (await decrypt(urlDoc.url)) || urlDoc.url, // Fallback to encrypted if decryption fails
+      }))
+    );
   },
 });

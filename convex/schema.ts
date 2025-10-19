@@ -10,7 +10,7 @@ export default defineSchema({
 
   services: defineTable({
     name: v.string(),
-    notes: v.optional(v.string()),
+    notes: v.optional(v.string()), // ENCRYPTED: Contains sensitive information
     deviceId: v.optional(v.id("devices")),
     iconUrl: v.optional(v.string()),
     userId: v.optional(v.id("users")),
@@ -19,7 +19,7 @@ export default defineSchema({
   serviceUrls: defineTable({
     serviceId: v.id("services"),
     label: v.string(),
-    url: v.string(),
+    url: v.string(), // ENCRYPTED: May contain private IPs/internal URLs
     pingInterval: v.optional(v.number()),
     excludeFromUptime: v.optional(v.boolean()),
     userId: v.optional(v.id("users")),

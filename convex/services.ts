@@ -1,28 +1,32 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { encrypt, decrypt } from "./encryption";
 
 export const list = query({
   args: { userId: v.optional(v.id("users")) },
   handler: async (ctx, args) => {
     if (!args.userId) return [];
-    const services = await ctx.db.query("services").withIndex("by_user", (q) => q.eq("userId", args.userId)).collect();
+    const services = await ctx.db.query("services").withIndex("by_user", (q: any) => q.eq("userId", args.userId)).collect();
 
     // Populate device and urls for each service
     return await Promise.all(services.map(async (service) => {
       const device = service.deviceId ? await ctx.db.get(service.deviceId) : null;
       const urls = await ctx.db
         .query("serviceUrls")
-        .withIndex("by_service", (q) => q.eq("serviceId", service._id))
+        .withIndex("by_service", (q: any) => q.eq("serviceId", service._id))
         .collect();
 
       // Get latest uptime check for each URL
       const urlsWithStatus = await Promise.all(urls.map(async (url) => {
+        // Decrypt URL
+        const decryptedUrl = (await decrypt(url.url)) || url.url;
+
         // If excluded from uptime, return null for all status fields
         if (url.excludeFromUptime) {
           return {
             _id: url._id,
             label: url.label,
-            url: url.url,
+            url: decryptedUrl,
             isUp: null,
             lastCheck: null,
             responseTime: null,
@@ -32,14 +36,14 @@ export const list = query({
 
         const latestCheck = await ctx.db
           .query("uptimeChecks")
-          .withIndex("by_url", (q) => q.eq("serviceUrlId", url._id))
+          .withIndex("by_url", (q: any) => q.eq("serviceUrlId", url._id))
           .order("desc")
           .first();
 
         return {
           _id: url._id,
           label: url.label,
-          url: url.url,
+          url: decryptedUrl,
           isUp: latestCheck?.isUp ?? null,
           lastCheck: latestCheck?.timestamp ?? null,
           responseTime: latestCheck?.responseTime ?? null,
@@ -47,8 +51,12 @@ export const list = query({
         };
       }));
 
+      // Decrypt notes
+      const decryptedNotes = service.notes ? await decrypt(service.notes) : null;
+
       return {
         ...service,
+        notes: decryptedNotes,
         device: device ? { name: device.name } : null,
         urls: urlsWithStatus,
       };
@@ -65,7 +73,12 @@ export const create = mutation({
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
-    return await ctx.db.insert("services", args);
+    // Encrypt notes before storing
+    const encryptedNotes = args.notes ? (await encrypt(args.notes)) || undefined : undefined;
+    return await ctx.db.insert("services", {
+      ...args,
+      notes: encryptedNotes,
+    });
   },
 });
 
@@ -85,7 +98,12 @@ export const update = mutation({
     if (!service || (service.userId && service.userId !== userId)) {
       throw new Error("Unauthorized");
     }
-    await ctx.db.patch(id, updates);
+    // Encrypt notes before updating
+    const encryptedNotes = updates.notes ? (await encrypt(updates.notes)) || undefined : undefined;
+    await ctx.db.patch(id, {
+      ...updates,
+      notes: encryptedNotes,
+    });
   },
 });
 
