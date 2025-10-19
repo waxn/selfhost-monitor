@@ -10,4 +10,11 @@ crons.interval(
   internal.uptime.checkAllUrls
 );
 
+// Reset demo user data every 30 minutes
+crons.interval(
+  "reset demo data",
+  { minutes: 30 },
+  internal.seed.resetDemoData
+);
+
 export default crons;

@@ -59,8 +59,8 @@
 			</p>
 
 			<div class="cta-buttons">
-				<button class="cta-primary" onclick={() => goto('/auth')}>
-					Get Started
+				<button class="cta-primary" onclick={() => goto('/auth?mode=demo')}>
+					Try Demo
 					<svg
 						width="20"
 						height="20"
@@ -77,7 +77,10 @@
 						/>
 					</svg>
 				</button>
-				<button class="cta-secondary login-btn" onclick={() => goto('/auth')}>
+				<button class="cta-secondary" onclick={() => goto('/auth')}>
+					Sign Up
+				</button>
+				<button class="cta-secondary login-btn" onclick={() => goto('/auth?mode=login')}>
 					Login
 				</button>
 			</div>
@@ -227,25 +230,30 @@
 	<section class="final-cta">
 		<div class="final-cta-content">
 			<h2>Ready to start monitoring?</h2>
-			<p>Start tracking your infrastructure now</p>
-			<button class="cta-primary" onclick={() => goto('/dashboard')}>
-				Go to Dashboard
-				<svg
-					width="20"
-					height="20"
-					viewBox="0 0 20 20"
-					fill="none"
-					xmlns="http://www.w3.org/2000/svg"
-				>
-					<path
-						d="M7.5 15L12.5 10L7.5 5"
-						stroke="currentColor"
-						stroke-width="2"
-						stroke-linecap="round"
-						stroke-linejoin="round"
-					/>
-				</svg>
-			</button>
+			<p>Try the demo or create your own account</p>
+			<div class="cta-buttons">
+				<button class="cta-primary" onclick={() => goto('/auth?mode=demo')}>
+					Try Demo
+					<svg
+						width="20"
+						height="20"
+						viewBox="0 0 20 20"
+						fill="none"
+						xmlns="http://www.w3.org/2000/svg"
+					>
+						<path
+							d="M7.5 15L12.5 10L7.5 5"
+							stroke="currentColor"
+							stroke-width="2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+						/>
+					</svg>
+				</button>
+				<button class="cta-secondary" onclick={() => goto('/auth')}>
+					Get Started
+				</button>
+			</div>
 		</div>
 	</section>
 

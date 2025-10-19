@@ -5,6 +5,7 @@
 	import ServiceCard from '$lib/components/ServiceCard.svelte';
 	import ServiceModal from '$lib/components/ServiceModal.svelte';
 	import DeviceModal from '$lib/components/DeviceModal.svelte';
+	import DemoBanner from '$lib/components/DemoBanner.svelte';
 	import type { Id } from '../../../convex/_generated/dataModel';
 
 	let currentUser = $state<any>(null);
@@ -121,6 +122,9 @@
 		showDeviceModal = false;
 		editingDevice = null;
 	}
+
+	// Check if current user is demo user
+	let isDemoUser = $derived(currentUser?.email === 'demo@selfhost-monitor.app');
 </script>
 
 <div class="container">
@@ -164,7 +168,12 @@
 		</div>
 	</header>
 
-	{#if devices.data && devices.data.length > 0}
+	<div class="content-wrapper">
+		{#if isDemoUser}
+			<DemoBanner />
+		{/if}
+
+		{#if devices.data && devices.data.length > 0}
 		<div class="devices-section">
 			<h2>Devices</h2>
 			<div class="devices-list">
@@ -232,6 +241,7 @@
 			</div>
 		{/if}
 	</main>
+	</div>
 </div>
 
 <ServiceModal isOpen={showServiceModal} onClose={closeServiceModal} {editingService} />
@@ -251,6 +261,12 @@
 		top: 0;
 		z-index: 100;
 		backdrop-filter: blur(10px);
+	}
+
+	.content-wrapper {
+		max-width: 1400px;
+		margin: 0 auto;
+		padding: 24px;
 	}
 
 	.header-content {
@@ -414,9 +430,7 @@
 	}
 
 	.devices-section {
-		max-width: 1400px;
-		margin: 24px auto;
-		padding: 0 24px;
+		margin-bottom: 24px;
 	}
 
 	.devices-section h2 {
@@ -498,9 +512,8 @@
 	}
 
 	main {
-		max-width: 1400px;
-		margin: 0 auto;
-		padding: 24px;
+		margin: 0;
+		padding: 0;
 	}
 
 	.loading {
