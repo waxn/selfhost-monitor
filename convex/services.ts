@@ -60,7 +60,7 @@ export const create = mutation({
   args: {
     name: v.string(),
     notes: v.optional(v.string()),
-    deviceId: v.id("devices"),
+    deviceId: v.optional(v.id("devices")),
     iconUrl: v.optional(v.string()),
     userId: v.id("users"),
   },
@@ -74,7 +74,7 @@ export const update = mutation({
     id: v.id("services"),
     name: v.string(),
     notes: v.optional(v.string()),
-    deviceId: v.id("devices"),
+    deviceId: v.optional(v.id("devices")),
     iconUrl: v.optional(v.string()),
     userId: v.id("users"),
   },

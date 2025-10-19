@@ -11,7 +11,7 @@ export default defineSchema({
   services: defineTable({
     name: v.string(),
     notes: v.optional(v.string()),
-    deviceId: v.id("devices"),
+    deviceId: v.optional(v.id("devices")),
     iconUrl: v.optional(v.string()),
     userId: v.optional(v.id("users")),
   }).index("by_user", ["userId"]),

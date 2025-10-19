@@ -10,7 +10,7 @@
 			_id: Id<'services'>;
 			name: string;
 			notes?: string;
-			deviceId: Id<'devices'>;
+			deviceId?: Id<'devices'>;
 			iconUrl?: string;
 			urls: Array<{
 				_id: Id<'serviceUrls'>;
@@ -49,7 +49,7 @@
 			if (editingService) {
 				name = editingService.name;
 				notes = editingService.notes || '';
-				deviceId = editingService.deviceId;
+				deviceId = editingService.deviceId || '';
 				iconUrl = editingService.iconUrl || '';
 				urls = editingService.urls.map((u) => ({ id: u._id, label: u.label, url: u.url, pingInterval: u.pingInterval ?? 5, excludeFromUptime: u.excludeFromUptime ?? false }));
 			} else {
@@ -86,8 +86,8 @@
 	}
 
 	async function handleSubmit() {
-		if (!name || !deviceId || !currentUser) {
-			console.log('Missing required fields:', { name, deviceId, currentUser });
+		if (!name || !currentUser) {
+			console.log('Missing required fields:', { name, currentUser });
 			return;
 		}
 
@@ -98,7 +98,7 @@
 					id: editingService._id,
 					name,
 					notes: notes || undefined,
-					deviceId: deviceId as Id<'devices'>,
+					deviceId: deviceId ? (deviceId as Id<'devices'>) : undefined,
 					iconUrl: iconUrl || undefined,
 					userId: currentUser._id
 				});
@@ -134,7 +134,7 @@
 				const serviceId = await createService({
 					name,
 					notes: notes || undefined,
-					deviceId: deviceId as Id<'devices'>,
+					deviceId: deviceId ? (deviceId as Id<'devices'>) : undefined,
 					iconUrl: iconUrl || undefined,
 					userId: currentUser._id
 				});
@@ -203,9 +203,9 @@
 				</div>
 
 				<div class="form-group">
-					<label for="device">Device/VM</label>
+					<label for="device">Device/VM (optional)</label>
 					<select id="device" bind:value={deviceId}>
-						<option value="">Select a device...</option>
+						<option value="">None</option>
 						{#if devices.data}
 							{#each devices.data as device}
 								<option value={device._id}>{device.name}</option>
@@ -279,7 +279,7 @@
 
 				<div class="button-row">
 					<button type="button" onclick={onClose} class="cancel-btn">Cancel</button>
-					<button type="button" onclick={handleSubmit} class="submit-btn" disabled={!name || !deviceId}>
+					<button type="button" onclick={handleSubmit} class="submit-btn" disabled={!name}>
 						{editingService ? 'Update' : 'Create'}
 					</button>
 				</div>
