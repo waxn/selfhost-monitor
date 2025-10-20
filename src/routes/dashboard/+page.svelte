@@ -124,14 +124,6 @@
 		editingDevice = null;
 	}
 
-	function handleSearch(event: Event) {
-		event.preventDefault();
-		if (searchQuery.trim()) {
-			window.open(`https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`, '_blank');
-			searchQuery = '';
-		}
-	}
-
 	// Check if current user is demo user
 	let isDemoUser = $derived(currentUser?.email === 'demo@selfhost-monitor.app');
 </script>
@@ -227,17 +219,25 @@
 					{/if}
 				</div>
 
-				<form class="search-box" onsubmit={handleSearch}>
-					<svg class="search-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+				<form class="search-box" method="get" action="https://duckduckgo.com/" target="_blank">
+					<svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
 						<circle cx="11" cy="11" r="8" stroke-width="2"/>
 						<path d="m21 21-4.35-4.35" stroke-width="2" stroke-linecap="round"/>
 					</svg>
 					<input
 						type="text"
+						name="q"
 						bind:value={searchQuery}
-						placeholder="Search Google or type a URL"
+						placeholder="Search the web"
 						class="search-input"
+						autocomplete="off"
 					/>
+					<input type="hidden" name="kae" value="d" />
+					<input type="hidden" name="k7" value="1e2329" />
+					<input type="hidden" name="kj" value="0a0e12" />
+					<input type="hidden" name="k8" value="e8eaed" />
+					<input type="hidden" name="k9" value="d35400" />
+					<input type="hidden" name="kx" value="d35400" />
 				</form>
 			</div>
 
@@ -756,19 +756,21 @@
 		position: relative;
 		display: flex;
 		align-items: center;
+		justify-content: center;
 	}
 
 	.search-icon {
 		position: absolute;
-		left: 20px;
+		left: 24px;
 		color: #6c757d;
 		pointer-events: none;
+		z-index: 1;
 	}
 
 	.search-input {
 		width: 100%;
 		padding: 18px 24px 18px 56px;
-		background: rgba(45, 51, 57, 0.6);
+		background: rgba(45, 51, 57, 0.8);
 		backdrop-filter: blur(10px);
 		border: 2px solid #3a3f47;
 		border-radius: 32px;
@@ -778,10 +780,15 @@
 		box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
 	}
 
+	.search-input:hover {
+		border-color: #4a5059;
+		background: rgba(45, 51, 57, 0.9);
+	}
+
 	.search-input:focus {
 		outline: none;
 		border-color: #d35400;
-		background: rgba(45, 51, 57, 0.9);
+		background: rgba(45, 51, 57, 0.95);
 		box-shadow: 0 8px 32px rgba(211, 84, 0, 0.3);
 	}
 
@@ -894,6 +901,10 @@
 		.search-input {
 			font-size: 15px;
 			padding: 16px 20px 16px 52px;
+		}
+
+		.search-icon {
+			left: 20px;
 		}
 
 		.startpage-grid {
