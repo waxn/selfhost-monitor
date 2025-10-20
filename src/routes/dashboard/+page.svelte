@@ -706,7 +706,7 @@
 	}
 
 	.startpage-wrapper {
-		max-width: 1200px;
+		max-width: 1400px;
 		margin: 0 auto;
 		padding: 60px 24px 24px;
 	}
@@ -790,31 +790,26 @@
 	}
 
 	.startpage-section {
-		margin-bottom: 48px;
+		margin-bottom: 32px;
 	}
 
 	.startpage-section h2 {
-		margin: 0 0 24px 0;
-		font-size: 22px;
+		margin: 0 0 16px 0;
+		font-size: 20px;
 		font-weight: 600;
 		color: #e8eaed;
-		text-align: center;
 	}
 
 	.startpage-grid {
 		display: grid;
 		grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-		gap: 20px;
-		justify-items: center;
+		gap: 24px;
 	}
 
 	.startpage-devices-grid {
 		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+		grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
 		gap: 16px;
-		justify-items: center;
-		max-width: 1000px;
-		margin: 0 auto;
 	}
 
 	.empty-state-startpage {
