@@ -8,6 +8,8 @@
 	import type { Id } from '../../../convex/_generated/dataModel';
 
 	let currentUser = $state<any>(null);
+	let showSettings = $state(false);
+	let startpageMode = $state(false);
 
 	// Get current user reactively
 	$effect(() => {
@@ -23,6 +25,30 @@
 				console.log('[Dashboard] currentUser is now:', currentUser);
 			}
 		});
+	});
+
+	// Load startpage mode setting from localStorage
+	$effect(() => {
+		const savedMode = localStorage.getItem('startpageMode');
+		if (savedMode !== null) {
+			startpageMode = savedMode === 'true';
+		}
+	});
+
+	// Close settings dropdown when clicking outside
+	$effect(() => {
+		if (showSettings) {
+			const handleClickOutside = (event: MouseEvent) => {
+				const target = event.target as HTMLElement;
+				if (!target.closest('.settings-container')) {
+					showSettings = false;
+				}
+			};
+			document.addEventListener('click', handleClickOutside);
+			return () => {
+				document.removeEventListener('click', handleClickOutside);
+			};
+		}
 	});
 
 	// Pass currentUser directly so useQuery can track it
@@ -72,7 +98,20 @@
 		await logout();
 		goto('/auth');
 	}
-	
+
+	function toggleSettings() {
+		showSettings = !showSettings;
+	}
+
+	function toggleStartpageMode() {
+		startpageMode = !startpageMode;
+		localStorage.setItem('startpageMode', String(startpageMode));
+	}
+
+	function closeSettings() {
+		showSettings = false;
+	}
+
 	function closeServiceModal() {
 		showServiceModal = false;
 		editingService = null;
@@ -94,6 +133,30 @@
 				{#if currentUser}
 					<div class="user-info">
 						<span class="user-name">{currentUser.name || currentUser.email || 'User'}</span>
+						<div class="settings-container">
+							<button onclick={toggleSettings} class="icon-btn settings-btn" aria-label="Settings">
+								<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+									<circle cx="12" cy="12" r="3"></circle>
+								</svg>
+							</button>
+							{#if showSettings}
+								<div class="settings-dropdown">
+									<div class="settings-option">
+										<label class="toggle-label">
+											<span>Startpage Mode</span>
+											<input
+												type="checkbox"
+												checked={startpageMode}
+												onchange={toggleStartpageMode}
+												class="toggle-checkbox"
+											/>
+											<span class="toggle-switch"></span>
+										</label>
+									</div>
+								</div>
+							{/if}
+						</div>
 						<button onclick={handleLogout} class="auth-btn">Logout</button>
 					</div>
 				{/if}
@@ -224,6 +287,83 @@
 		color: #e8eaed;
 		font-size: 14px;
 		font-weight: 500;
+	}
+
+	.settings-container {
+		position: relative;
+	}
+
+	.settings-btn {
+		color: #a0a4a8;
+	}
+
+	.settings-dropdown {
+		position: absolute;
+		top: calc(100% + 8px);
+		right: 0;
+		background: #2d3339;
+		border: 1px solid #3a3f47;
+		border-radius: 8px;
+		padding: 12px;
+		min-width: 200px;
+		box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+		z-index: 1000;
+	}
+
+	.settings-option {
+		padding: 8px 0;
+	}
+
+	.toggle-label {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		cursor: pointer;
+		color: #e8eaed;
+		font-size: 14px;
+		gap: 12px;
+	}
+
+	.toggle-checkbox {
+		display: none;
+	}
+
+	.toggle-switch {
+		position: relative;
+		width: 44px;
+		height: 24px;
+		background: #3a3f47;
+		border-radius: 12px;
+		transition: background 0.3s;
+		flex-shrink: 0;
+	}
+
+	.toggle-switch::after {
+		content: '';
+		position: absolute;
+		top: 2px;
+		left: 2px;
+		width: 20px;
+		height: 20px;
+		background: #e8eaed;
+		border-radius: 50%;
+		transition: transform 0.3s;
+	}
+
+	.toggle-checkbox:checked + .toggle-switch {
+		background: linear-gradient(135deg, #d35400 0%, #c54d00 100%);
+	}
+
+	.toggle-checkbox:checked + .toggle-switch::after {
+		transform: translateX(20px);
+	}
+
+	.toggle-label:hover .toggle-switch {
+		background: #4a5059;
+	}
+
+	.toggle-checkbox:checked + .toggle-switch:hover {
+		background: linear-gradient(135deg, #e05f00 0%, #d45400 100%);
 	}
 
 	.primary-btn,
