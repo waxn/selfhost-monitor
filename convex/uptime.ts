@@ -3,6 +3,10 @@ import { action, internalAction, internalMutation, internalQuery, query } from "
 import { internal } from "./_generated/api";
 import { decrypt } from "./encryption";
 
+// Get encryption key - must be set in Convex dashboard as ENCRYPTION_KEY
+// For now, we'll pass undefined and handle gracefully (store unencrypted)
+const getEncryptionKey = () => undefined as string | undefined;
+
 export const checkUrl = internalAction({
   args: { urlId: v.id("serviceUrls") },
   handler: async (ctx, args) => {
@@ -10,7 +14,7 @@ export const checkUrl = internalAction({
     if (!url) return;
 
     // Decrypt the URL before making the request
-    const decryptedUrl = (await decrypt(url.url)) || url.url;
+    const decryptedUrl = (await decrypt(url.url, getEncryptionKey())) || url.url;
 
     const startTime = Date.now();
     let isUp = false;

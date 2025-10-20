@@ -14,7 +14,10 @@
       "Bash(npm run dev:*)",
       "Read(//dev/pts/**)",
       "WebSearch",
-      "WebFetch(domain:labs.convex.dev)"
+      "WebFetch(domain:labs.convex.dev)",
+      "Bash(openssl rand -hex 32)",
+      "Read(//home/linus/Downloads/selfhost-monitor/**)",
+      "Bash(readlink -f ~/Downloads/selfhost-monitor)"
     ],
     "deny": [],
     "ask": []

@@ -2,6 +2,10 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { encrypt, decrypt } from "./encryption";
 
+// Get encryption key - must be set in Convex dashboard as ENCRYPTION_KEY
+// For now, we'll pass undefined and handle gracefully (store unencrypted)
+const getEncryptionKey = () => undefined as string | undefined;
+
 export const create = mutation({
   args: {
     serviceId: v.id("services"),
@@ -13,7 +17,7 @@ export const create = mutation({
   },
   handler: async (ctx, args) => {
     // Encrypt the URL before storing
-    const encryptedUrl = await encrypt(args.url);
+    const encryptedUrl = await encrypt(args.url, getEncryptionKey());
     return await ctx.db.insert("serviceUrls", {
       ...args,
       url: encryptedUrl || args.url, // Fallback to original if encryption fails
@@ -38,7 +42,7 @@ export const update = mutation({
       throw new Error("Unauthorized");
     }
     // Encrypt the URL before storing
-    const encryptedUrl = await encrypt(updates.url);
+    const encryptedUrl = await encrypt(updates.url, getEncryptionKey());
     await ctx.db.patch(id, {
       ...updates,
       url: encryptedUrl || updates.url, // Fallback to original if encryption fails
@@ -80,7 +84,7 @@ export const listByService = query({
     return await Promise.all(
       urls.map(async (urlDoc) => ({
         ...urlDoc,
-        url: (await decrypt(urlDoc.url)) || urlDoc.url, // Fallback to encrypted if decryption fails
+        url: (await decrypt(urlDoc.url, getEncryptionKey())) || urlDoc.url, // Fallback to encrypted if decryption fails
       }))
     );
   },

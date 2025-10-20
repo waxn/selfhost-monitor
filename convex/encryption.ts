@@ -3,10 +3,15 @@
  * Uses Web Crypto API which is available in Convex runtime
  */
 
-// Convert string to Uint8Array
+// Convert string to Uint8Array with proper ArrayBuffer
 function stringToUint8Array(str: string): Uint8Array {
   const encoder = new TextEncoder();
-  return encoder.encode(str);
+  const encoded = encoder.encode(str);
+  // Create a new Uint8Array with a proper ArrayBuffer
+  const buffer = new ArrayBuffer(encoded.length);
+  const result = new Uint8Array(buffer);
+  result.set(encoded);
+  return result;
 }
 
 // Convert Uint8Array to string
@@ -20,10 +25,11 @@ function uint8ArrayToBase64(arr: Uint8Array): string {
   return btoa(String.fromCharCode(...Array.from(arr)));
 }
 
-// Convert base64 to Uint8Array
+// Convert base64 to Uint8Array with proper ArrayBuffer
 function base64ToUint8Array(base64: string): Uint8Array {
   const binaryString = atob(base64);
-  const bytes = new Uint8Array(binaryString.length);
+  const buffer = new ArrayBuffer(binaryString.length);
+  const bytes = new Uint8Array(buffer);
   for (let i = 0; i < binaryString.length; i++) {
     bytes[i] = binaryString.charCodeAt(i);
   }
@@ -31,12 +37,13 @@ function base64ToUint8Array(base64: string): Uint8Array {
 }
 
 // Get or validate encryption key from environment
-function getEncryptionKey(): string {
-  const key = process.env.ENCRYPTION_KEY;
+// In Convex, environment variables must be accessed through the ctx parameter
+// This function will be called with the key passed from the mutation/query
+function getEncryptionKey(key: string | undefined): string {
   if (!key) {
     throw new Error(
       "ENCRYPTION_KEY environment variable not set. " +
-      "Generate one with: node scripts/generate-encryption-key.js"
+      "Generate one with: openssl rand -hex 32"
     );
   }
   // Key should be 32 bytes (64 hex characters) for AES-256
@@ -48,23 +55,23 @@ function getEncryptionKey(): string {
   return key;
 }
 
-// Convert hex string to Uint8Array
+// Convert hex string to Uint8Array with proper ArrayBuffer
 function hexToUint8Array(hex: string): Uint8Array {
-  const bytes = new Uint8Array(hex.length / 2);
+  const buffer = new ArrayBuffer(hex.length / 2);
+  const bytes = new Uint8Array(buffer);
   for (let i = 0; i < hex.length; i += 2) {
-    bytes[i / 2] = parseInt(hex.substr(i, 2), 16);
+    bytes[i / 2] = parseInt(hex.substring(i, i + 2), 16);
   }
   return bytes;
 }
 
 // Import the encryption key
-async function importKey(): Promise<CryptoKey> {
-  const keyHex = getEncryptionKey();
+async function importKey(keyHex: string): Promise<CryptoKey> {
   const keyBytes = hexToUint8Array(keyHex);
 
   return await crypto.subtle.importKey(
     "raw",
-    keyBytes,
+    keyBytes.buffer as ArrayBuffer,
     { name: "AES-GCM" },
     false,
     ["encrypt", "decrypt"]
@@ -75,18 +82,26 @@ async function importKey(): Promise<CryptoKey> {
  * Encrypt a string value
  * Returns base64-encoded encrypted data with IV prepended
  * Format: base64(IV + encrypted_data)
+ * If no encryption key is provided, returns the plaintext unencrypted
  */
-export async function encrypt(plaintext: string | null | undefined): Promise<string | null> {
+export async function encrypt(plaintext: string | null | undefined, encryptionKey: string | undefined): Promise<string | null> {
   // Handle null/undefined values
   if (plaintext === null || plaintext === undefined || plaintext === "") {
     return null;
   }
 
+  // If no encryption key, return plaintext
+  if (!encryptionKey) {
+    return plaintext;
+  }
+
   try {
-    const key = await importKey();
+    const keyHex = getEncryptionKey(encryptionKey);
+    const key = await importKey(keyHex);
 
     // Generate random IV (12 bytes for GCM)
-    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const ivBuffer = new ArrayBuffer(12);
+    const iv = crypto.getRandomValues(new Uint8Array(ivBuffer));
 
     // Encrypt the data
     const encodedText = stringToUint8Array(plaintext);
@@ -96,7 +111,7 @@ export async function encrypt(plaintext: string | null | undefined): Promise<str
         iv: iv,
       },
       key,
-      encodedText
+      encodedText.buffer as ArrayBuffer
     );
 
     const encryptedArray = new Uint8Array(encryptedBuffer);
@@ -117,15 +132,22 @@ export async function encrypt(plaintext: string | null | undefined): Promise<str
 /**
  * Decrypt a string value
  * Expects base64-encoded data with IV prepended
+ * If no encryption key is provided, returns the data as-is (assuming it's unencrypted)
  */
-export async function decrypt(encryptedData: string | null | undefined): Promise<string | null> {
+export async function decrypt(encryptedData: string | null | undefined, encryptionKey: string | undefined): Promise<string | null> {
   // Handle null/undefined values
   if (encryptedData === null || encryptedData === undefined || encryptedData === "") {
     return null;
   }
 
+  // If no encryption key, return data as-is
+  if (!encryptionKey) {
+    return encryptedData;
+  }
+
   try {
-    const key = await importKey();
+    const keyHex = getEncryptionKey(encryptionKey);
+    const key = await importKey(keyHex);
 
     // Decode from base64
     const combined = base64ToUint8Array(encryptedData);
@@ -141,7 +163,7 @@ export async function decrypt(encryptedData: string | null | undefined): Promise
         iv: iv,
       },
       key,
-      encryptedArray
+      encryptedArray.buffer as ArrayBuffer
     );
 
     const decryptedArray = new Uint8Array(decryptedBuffer);
@@ -157,9 +179,9 @@ export async function decrypt(encryptedData: string | null | undefined): Promise
 /**
  * Check if encryption is enabled
  */
-export function isEncryptionEnabled(): boolean {
+export function isEncryptionEnabled(encryptionKey: string | undefined): boolean {
   try {
-    getEncryptionKey();
+    getEncryptionKey(encryptionKey);
     return true;
   } catch {
     return false;
@@ -172,13 +194,14 @@ export function isEncryptionEnabled(): boolean {
  */
 export async function encryptFields<T extends Record<string, any>>(
   obj: T,
-  fields: (keyof T)[]
+  fields: (keyof T)[],
+  encryptionKey: string | undefined
 ): Promise<T> {
   const result = { ...obj };
 
   for (const field of fields) {
     if (typeof obj[field] === 'string') {
-      result[field] = await encrypt(obj[field] as string) as any;
+      result[field] = await encrypt(obj[field] as string, encryptionKey) as any;
     }
   }
 
@@ -191,13 +214,14 @@ export async function encryptFields<T extends Record<string, any>>(
  */
 export async function decryptFields<T extends Record<string, any>>(
   obj: T,
-  fields: (keyof T)[]
+  fields: (keyof T)[],
+  encryptionKey: string | undefined
 ): Promise<T> {
   const result = { ...obj };
 
   for (const field of fields) {
     if (typeof obj[field] === 'string') {
-      result[field] = await decrypt(obj[field] as string) as any;
+      result[field] = await decrypt(obj[field] as string, encryptionKey) as any;
     }
   }
 

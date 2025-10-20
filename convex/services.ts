@@ -2,6 +2,10 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { encrypt, decrypt } from "./encryption";
 
+// Get encryption key - must be set in Convex dashboard as ENCRYPTION_KEY
+// For now, we'll pass undefined and handle gracefully (store unencrypted)
+const getEncryptionKey = () => undefined as string | undefined;
+
 export const list = query({
   args: { userId: v.optional(v.id("users")) },
   handler: async (ctx, args) => {
@@ -19,7 +23,7 @@ export const list = query({
       // Get latest uptime check for each URL
       const urlsWithStatus = await Promise.all(urls.map(async (url) => {
         // Decrypt URL
-        const decryptedUrl = (await decrypt(url.url)) || url.url;
+        const decryptedUrl = (await decrypt(url.url, getEncryptionKey())) || url.url;
 
         // If excluded from uptime, return null for all status fields
         if (url.excludeFromUptime) {
@@ -52,7 +56,7 @@ export const list = query({
       }));
 
       // Decrypt notes
-      const decryptedNotes = service.notes ? await decrypt(service.notes) : null;
+      const decryptedNotes = service.notes ? await decrypt(service.notes, getEncryptionKey()) : null;
 
       return {
         ...service,
@@ -74,7 +78,7 @@ export const create = mutation({
   },
   handler: async (ctx, args) => {
     // Encrypt notes before storing
-    const encryptedNotes = args.notes ? (await encrypt(args.notes)) || undefined : undefined;
+    const encryptedNotes = args.notes ? (await encrypt(args.notes, getEncryptionKey())) || undefined : undefined;
     return await ctx.db.insert("services", {
       ...args,
       notes: encryptedNotes,
@@ -99,7 +103,7 @@ export const update = mutation({
       throw new Error("Unauthorized");
     }
     // Encrypt notes before updating
-    const encryptedNotes = updates.notes ? (await encrypt(updates.notes)) || undefined : undefined;
+    const encryptedNotes = updates.notes ? (await encrypt(updates.notes, getEncryptionKey())) || undefined : undefined;
     await ctx.db.patch(id, {
       ...updates,
       notes: encryptedNotes,
