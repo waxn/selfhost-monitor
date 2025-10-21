@@ -12,6 +12,7 @@
 	let showSettings = $state(false);
 	let startpageMode = $state(false);
 	let searchQuery = $state('');
+	let selectedDeviceId = $state<Id<'devices'> | null>(null);
 
 	// Get current user reactively
 	$effect(() => {
@@ -123,6 +124,18 @@
 		showDeviceModal = false;
 		editingDevice = null;
 	}
+
+	function toggleDeviceFilter(deviceId: Id<'devices'>) {
+		// Toggle device selection - click again to deselect
+		selectedDeviceId = selectedDeviceId === deviceId ? null : deviceId;
+	}
+
+	// Filter services based on selected device
+	let filteredServices = $derived(() => {
+		if (!services.data) return [];
+		if (!selectedDeviceId) return services.data;
+		return services.data.filter(service => service.deviceId === selectedDeviceId);
+	});
 
 	// Check if current user is demo user
 	let isDemoUser = $derived(currentUser?.email === 'demo@selfhost-monitor.app');
@@ -248,6 +261,12 @@
 			<!-- Services in Startpage Mode -->
 			{#if services.data === undefined}
 				<div class="loading">Loading services...</div>
+			{:else if filteredServices().length === 0 && selectedDeviceId}
+				<div class="empty-state-startpage">
+					<div class="empty-icon">📊</div>
+					<p>No services on this device</p>
+					<button onclick={() => selectedDeviceId = null} class="clear-filter-btn">Show all services</button>
+				</div>
 			{:else if services.data.length === 0}
 				<div class="empty-state-startpage">
 					<div class="empty-icon">📊</div>
@@ -255,9 +274,16 @@
 				</div>
 			{:else}
 				<div class="startpage-section">
-					<h2>Services</h2>
+					<h2>
+						Services
+						{#if selectedDeviceId}
+							<button onclick={() => selectedDeviceId = null} class="clear-filter-btn-inline">
+								(Clear filter)
+							</button>
+						{/if}
+					</h2>
 					<div class="startpage-grid">
-						{#each services.data as service (service._id)}
+						{#each filteredServices() as service (service._id)}
 							<ServiceCard
 								{service}
 								onEdit={() => openEditService(service)}
@@ -274,7 +300,7 @@
 					<h2>Devices</h2>
 					<div class="startpage-devices-grid">
 						{#each devices.data as device}
-							<div class="device-item">
+							<div class="device-item" class:selected={selectedDeviceId === device._id} onclick={() => toggleDeviceFilter(device._id)}>
 								<div class="device-info">
 									<div class="device-name">{device.name}</div>
 									{#if device.description}
@@ -282,7 +308,7 @@
 									{/if}
 								</div>
 								<div class="device-actions">
-									<button onclick={() => openEditDevice(device)} class="icon-btn" aria-label="Edit">
+									<button onclick={(e) => { e.stopPropagation(); openEditDevice(device); }} class="icon-btn" aria-label="Edit">
 										<svg width="16" height="16" viewBox="0 0 16 16" fill="none">
 											<path
 												d="M11.333 2A1.886 1.886 0 0 1 14 4.667l-9 9-3.667 1L2.667 11l9-9Z"
@@ -294,7 +320,7 @@
 										</svg>
 									</button>
 									<button
-										onclick={() => handleDeleteDevice(device._id)}
+										onclick={(e) => { e.stopPropagation(); handleDeleteDevice(device._id); }}
 										class="icon-btn danger"
 										aria-label="Delete"
 									>
@@ -325,7 +351,7 @@
 					<h2>Devices</h2>
 					<div class="devices-list">
 						{#each devices.data as device}
-							<div class="device-item">
+							<div class="device-item" class:selected={selectedDeviceId === device._id} onclick={() => toggleDeviceFilter(device._id)}>
 								<div class="device-info">
 									<div class="device-name">{device.name}</div>
 									{#if device.description}
@@ -333,7 +359,7 @@
 									{/if}
 								</div>
 								<div class="device-actions">
-									<button onclick={() => openEditDevice(device)} class="icon-btn" aria-label="Edit">
+									<button onclick={(e) => { e.stopPropagation(); openEditDevice(device); }} class="icon-btn" aria-label="Edit">
 										<svg width="16" height="16" viewBox="0 0 16 16" fill="none">
 											<path
 												d="M11.333 2A1.886 1.886 0 0 1 14 4.667l-9 9-3.667 1L2.667 11l9-9Z"
@@ -345,7 +371,7 @@
 										</svg>
 									</button>
 									<button
-										onclick={() => handleDeleteDevice(device._id)}
+										onclick={(e) => { e.stopPropagation(); handleDeleteDevice(device._id); }}
 										class="icon-btn danger"
 										aria-label="Delete"
 									>
@@ -369,6 +395,13 @@
 			<main>
 				{#if services.data === undefined}
 					<div class="loading">Loading services...</div>
+				{:else if filteredServices().length === 0 && selectedDeviceId}
+					<div class="empty-state">
+						<div class="empty-icon">📊</div>
+						<h3>No services on this device</h3>
+						<p>This device doesn't have any services assigned to it</p>
+						<button onclick={() => selectedDeviceId = null} class="primary-btn">Show all services</button>
+					</div>
 				{:else if services.data.length === 0}
 					<div class="empty-state">
 						<div class="empty-icon">📊</div>
@@ -377,8 +410,14 @@
 						<button onclick={openAddService} class="primary-btn">+ Add Service</button>
 					</div>
 				{:else}
+					{#if selectedDeviceId}
+						<div class="filter-indicator">
+							Showing services for selected device
+							<button onclick={() => selectedDeviceId = null} class="clear-filter-btn-inline">Clear filter</button>
+						</div>
+					{/if}
 					<div class="services-grid">
-						{#each services.data as service (service._id)}
+						{#each filteredServices() as service (service._id)}
 							<ServiceCard
 								{service}
 								onEdit={() => openEditService(service)}
@@ -603,12 +642,23 @@
 		justify-content: space-between;
 		align-items: center;
 		transition: all 0.2s;
+		cursor: pointer;
 	}
 
 	.device-item:hover {
 		border-color: #d35400;
 		background: #343a41;
 		box-shadow: 0 0 12px rgba(211, 84, 0, 0.3);
+	}
+
+	.device-item.selected {
+		border-color: #d35400;
+		background: linear-gradient(145deg, #343a41 0%, #2d3339 100%);
+		box-shadow: 0 0 20px rgba(211, 84, 0, 0.4);
+	}
+
+	.device-item.selected .device-name {
+		color: #d35400;
 	}
 
 	.device-info {
@@ -852,6 +902,44 @@
 		background: rgba(192, 57, 43, 0.15);
 		border-color: #c0392b;
 		color: #c0392b;
+	}
+
+	.filter-indicator {
+		background: rgba(211, 84, 0, 0.1);
+		border: 1px solid #d35400;
+		border-radius: 8px;
+		padding: 12px 16px;
+		margin-bottom: 16px;
+		color: #e8eaed;
+		font-size: 14px;
+		display: flex;
+		align-items: center;
+		gap: 12px;
+	}
+
+	.clear-filter-btn,
+	.clear-filter-btn-inline {
+		background: transparent;
+		border: 1px solid #3a3f47;
+		border-radius: 6px;
+		padding: 8px 16px;
+		color: #a0a4a8;
+		font-size: 14px;
+		cursor: pointer;
+		transition: all 0.2s;
+	}
+
+	.clear-filter-btn-inline {
+		padding: 4px 12px;
+		font-size: 13px;
+		margin-left: 8px;
+	}
+
+	.clear-filter-btn:hover,
+	.clear-filter-btn-inline:hover {
+		background: #2d3339;
+		border-color: #d35400;
+		color: #d35400;
 	}
 
 	@media (max-width: 768px) {
