@@ -2,6 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
+	import favicon from '$lib/assets/favicon.ico';
 
 	let mode: 'login' | 'register' = $state('login');
 	let email = $state('');
@@ -117,7 +118,27 @@
 
 <div class="auth-page">
 	<div class="auth-card">
-		<h2>{mode === 'login' ? 'Sign in' : 'Create account'}</h2>
+		<a href="/" class="logo-link">
+			<img src={favicon} alt="SelfHost Monitor" class="auth-logo" />
+		</a>
+
+		<div class="mode-switcher">
+			<button
+				class="mode-btn"
+				class:active={mode === 'login'}
+				onclick={() => { mode = 'login'; error = null; }}
+			>
+				Sign In
+			</button>
+			<button
+				class="mode-btn"
+				class:active={mode === 'register'}
+				onclick={() => { mode = 'register'; error = null; }}
+			>
+				Sign Up
+			</button>
+		</div>
+
 		{#if error}
 			<div class="error">{error}</div>
 		{/if}
@@ -136,33 +157,23 @@
 			<label for="password">Password</label>
 			<input id="password" type="password" bind:value={password} placeholder="password" />
 
-			<button class="cta-primary" on:click={submit}>{mode === 'login' ? 'Sign in' : 'Register'}</button>
+			<button class="cta-primary" onclick={submit}>{mode === 'login' ? 'Sign in' : 'Register'}</button>
 
 			<div class="demo-separator">
 				<span>OR</span>
 			</div>
 
-			<button class="cta-demo" on:click={loginAsDemo}>
+			<button class="cta-demo" onclick={loginAsDemo}>
 				🎭 Try Demo Account
 			</button>
 		{/if}
 
-		<div class="switch">
-			{#if mode === 'login'}
-				<span>Don't have an account?</span>
-				<button class="link" on:click={() => { mode = 'register'; error = null; }}>Create one</button>
-			{:else}
-				<span>Already have an account?</span>
-				<button class="link" on:click={() => { mode = 'login'; error = null; }}>Sign in</button>
-			{/if}
-		</div>
-
 		{#if mode === 'register'}
 			<div class="legal-notice">
 				By registering, you agree to our
-				<button class="legal-link" on:click={() => goto('/terms')}>Terms of Service</button>
+				<button class="legal-link" onclick={() => goto('/terms')}>Terms of Service</button>
 				and
-				<button class="legal-link" on:click={() => goto('/privacy')}>Privacy Policy</button>
+				<button class="legal-link" onclick={() => goto('/privacy')}>Privacy Policy</button>
 			</div>
 		{/if}
 	</div>
@@ -174,61 +185,108 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		background: linear-gradient(180deg, #071018 0%, #051019 100%);
+		background: #0a0e12;
 	}
 
 	.auth-card {
-		background: #0b1116;
-		padding: 24px;
+		background: #12161c;
+		border: 1px solid #1e2329;
+		padding: 40px;
 		border-radius: 12px;
-		width: 340px;
-		box-shadow: 0 6px 30px rgba(0,0,0,0.6);
+		width: 100%;
+		max-width: 400px;
+		box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 	}
 
-	.auth-card h2 {
-		margin: 0 0 12px 0;
+	.logo-link {
+		display: flex;
+		justify-content: center;
+		margin-bottom: 32px;
+		transition: opacity 0.2s;
+	}
+
+	.logo-link:hover {
+		opacity: 0.8;
+	}
+
+	.auth-logo {
+		width: 56px;
+		height: 56px;
+	}
+
+	.mode-switcher {
+		display: flex;
+		background: #0a0e12;
+		border-radius: 8px;
+		padding: 4px;
+		margin-bottom: 24px;
+		gap: 4px;
+	}
+
+	.mode-btn {
+		flex: 1;
+		padding: 10px;
+		background: transparent;
+		border: none;
+		color: #a0a4a8;
+		font-size: 14px;
+		font-weight: 500;
+		border-radius: 6px;
+		cursor: pointer;
+		transition: all 0.2s;
+	}
+
+	.mode-btn:hover {
+		color: #e8eaed;
+	}
+
+	.mode-btn.active {
+		background: #d35400;
+		color: white;
 	}
 
 	.auth-card label {
 		display: block;
-		font-size: 13px;
-		color: #98a0a8;
-		margin-top: 12px;
+		font-size: 14px;
+		color: #a0a4a8;
+		margin-top: 16px;
+		margin-bottom: 6px;
+		font-weight: 500;
 	}
 
 	.auth-card input {
 		width: 100%;
-		padding: 10px 12px;
+		padding: 12px;
 		border-radius: 8px;
-		border: 1px solid #1b2430;
-		background: #071018;
+		border: 1px solid #1e2329;
+		background: #0a0e12;
 		color: #e8eaed;
-		margin-top: 6px;
+		font-size: 15px;
+		transition: all 0.2s;
+	}
+
+	.auth-card input:focus {
+		outline: none;
+		border-color: #d35400;
 	}
 
 	.cta-primary {
-		margin-top: 16px;
+		margin-top: 24px;
 		width: 100%;
-		padding: 10px;
+		padding: 12px;
 		border-radius: 8px;
-		background: linear-gradient(90deg,#d35400,#e67e22);
+		background: #d35400;
 		border: none;
 		color: white;
-		font-weight: 700;
-	}
-
-	.switch {
-		margin-top: 12px;
-		display:flex;
-		align-items:center;
-		gap:8px;
-	}
-
-	.link {
-		background: none;
-		border: none;
-		color: #57a6ff;
+		font-weight: 600;
+		font-size: 15px;
 		cursor: pointer;
+		transition: all 0.2s;
+	}
+
+	.cta-primary:hover {
+		background: #e05f00;
+		transform: translateY(-1px);
 	}
 
 	.error {
@@ -268,7 +326,7 @@
 	}
 
 	.demo-separator {
-		margin: 20px 0;
+		margin: 24px 0;
 		text-align: center;
 		position: relative;
 	}
@@ -278,9 +336,9 @@
 		content: '';
 		position: absolute;
 		top: 50%;
-		width: 40%;
+		width: 42%;
 		height: 1px;
-		background: #1b2430;
+		background: #1e2329;
 	}
 
 	.demo-separator::before {
@@ -292,22 +350,24 @@
 	}
 
 	.demo-separator span {
-		background: #0b1116;
-		padding: 0 12px;
+		background: #12161c;
+		padding: 0 16px;
 		color: #6c757d;
 		font-size: 13px;
 		position: relative;
 		z-index: 1;
+		font-weight: 500;
 	}
 
 	.cta-demo {
 		width: 100%;
-		padding: 10px;
+		padding: 12px;
 		border-radius: 8px;
-		background: rgba(211, 84, 0, 0.15);
-		border: 1px solid rgba(211, 84, 0, 0.3);
-		color: #e67e22;
-		font-weight: 600;
+		background: transparent;
+		border: 1px solid #3a3f47;
+		color: #e8eaed;
+		font-weight: 500;
+		font-size: 15px;
 		cursor: pointer;
 		transition: all 0.2s;
 		display: flex;
@@ -317,9 +377,8 @@
 	}
 
 	.cta-demo:hover {
-		background: rgba(211, 84, 0, 0.25);
-		border-color: #d35400;
+		background: #1a1e24;
+		border-color: #4a5059;
 		transform: translateY(-1px);
-		box-shadow: 0 4px 12px rgba(211, 84, 0, 0.3);
 	}
 </style>

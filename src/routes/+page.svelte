@@ -59,10 +59,7 @@
 					Try Demo
 				</button>
 				<button class="cta-secondary" onclick={() => goto('/auth')}>
-					Sign Up
-				</button>
-				<button class="cta-secondary" onclick={() => goto('/auth?mode=login')}>
-					Login
+					Get Started
 				</button>
 			</div>
 		</div>
@@ -298,21 +295,6 @@
 			<div class="cta-buttons">
 				<button class="cta-primary" onclick={() => goto('/auth?mode=demo')}>
 					Try Demo
-					<svg
-						width="20"
-						height="20"
-						viewBox="0 0 20 20"
-						fill="none"
-						xmlns="http://www.w3.org/2000/svg"
-					>
-						<path
-							d="M7.5 15L12.5 10L7.5 5"
-							stroke="currentColor"
-							stroke-width="2"
-							stroke-linecap="round"
-							stroke-linejoin="round"
-						/>
-					</svg>
 				</button>
 				<button class="cta-secondary" onclick={() => goto('/auth')}>
 					Get Started
