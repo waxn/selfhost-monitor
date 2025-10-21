@@ -72,7 +72,6 @@
 		{ name: 'Navy', value: '#0d1117' },
 		{ name: 'Dark Teal', value: '#0a1517' },
 		{ name: 'Wine', value: '#1a0a0f' },
-		{ name: 'Slate', value: '#0f1419' },
 		{ name: 'Black', value: '#000000' },
 	];
 
@@ -96,6 +95,7 @@
 	let showDeviceModal = $state(false);
 	let editingService = $state<any>(null);
 	let editingDevice = $state<any>(null);
+	let isScrolled = $state(false);
 
 	function openAddService() {
 		editingService = null;
@@ -356,6 +356,16 @@
 		console.log('[Background Debug] currentBackgroundImage:', currentBackgroundImage);
 		console.log('[Background Debug] userPreferences.data:', userPreferences.data);
 	});
+
+	// Handle scroll for header styling
+	$effect(() => {
+		const handleScroll = () => {
+			isScrolled = window.scrollY > 20;
+		};
+
+		window.addEventListener('scroll', handleScroll);
+		return () => window.removeEventListener('scroll', handleScroll);
+	});
 </script>
 
 <div
@@ -369,7 +379,7 @@
 	style:--tile-opacity={currentTileOpacity}
 >
 	{#if !startpageMode}
-		<header>
+		<header class:scrolled={isScrolled}>
 			<div class="header-content">
 				<a href="/" class="logo-link">
 					<img src={favicon} alt="SelfHost Monitor" class="header-logo" />
@@ -423,6 +433,13 @@
 														{/if}
 													</button>
 												{/each}
+												<label class="color-option custom-color-picker" title="Custom Color">
+													<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+														<circle cx="12" cy="12" r="10" stroke-width="2"/>
+														<path d="M12 2v20M2 12h20" stroke-width="2"/>
+													</svg>
+													<input type="color" onchange={(e) => changeBackground((e.target as HTMLInputElement).value)} style="display: none;" />
+												</label>
 											</div>
 
 											<label class="upload-btn">
@@ -533,6 +550,13 @@
 													{/if}
 												</button>
 											{/each}
+											<label class="color-option custom-color-picker" title="Custom Color">
+												<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+													<circle cx="12" cy="12" r="10" stroke-width="2"/>
+													<path d="M12 2v20M2 12h20" stroke-width="2"/>
+												</svg>
+												<input type="color" onchange={(e) => changeBackground((e.target as HTMLInputElement).value)} style="display: none;" />
+											</label>
 										</div>
 
 										<label class="upload-btn">
@@ -792,11 +816,36 @@
 	header {
 		background: linear-gradient(145deg, #1e2329 0%, #0a0e12 100%);
 		border-bottom: 1px solid #3a3f47;
-		padding: 24px;
+		padding: 16px 24px;
 		position: sticky;
 		top: 0;
 		z-index: 100;
 		backdrop-filter: blur(10px);
+		transition: all 0.3s ease;
+	}
+
+	header.scrolled {
+		background: rgba(30, 35, 41, 0.85);
+		backdrop-filter: blur(20px);
+		border-bottom: 1px solid rgba(58, 63, 71, 0.5);
+		padding: 12px 24px;
+		margin: 12px;
+		border-radius: 24px;
+		top: 12px;
+		box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+	}
+
+	header.scrolled .header-content {
+		gap: 12px;
+	}
+
+	header.scrolled h1 {
+		font-size: 22px;
+	}
+
+	header.scrolled .header-logo {
+		width: 28px;
+		height: 28px;
 	}
 
 	.content-wrapper {
@@ -923,6 +972,27 @@
 	.color-option.selected {
 		border-color: #d35400;
 		box-shadow: 0 0 0 2px rgba(211, 84, 0, 0.2);
+	}
+
+	.custom-color-picker {
+		background: linear-gradient(135deg,
+			#ff0000 0%, #ff7f00 16.66%, #ffff00 33.33%,
+			#00ff00 50%, #0000ff 66.66%, #8b00ff 83.33%, #ff0000 100%);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		cursor: pointer;
+		position: relative;
+		border: 2px solid #3a3f47 !important;
+	}
+
+	.custom-color-picker svg {
+		filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.8));
+		color: white;
+	}
+
+	.custom-color-picker:hover {
+		border-color: #6c757d !important;
 	}
 
 	.upload-btn {
