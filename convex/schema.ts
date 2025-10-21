@@ -44,5 +44,8 @@ export default defineSchema({
     createdAt: v.optional(v.number()),
     // store password hash (serialized salt:key) for password auth
     passwordHash: v.optional(v.string()),
+    // User preferences
+    backgroundColor: v.optional(v.string()),
+    backgroundImage: v.optional(v.string()),
   }).index("by_name", ["name"]).index("by_email", ["email"]),
 });

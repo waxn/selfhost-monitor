@@ -58,8 +58,34 @@
 	// Pass currentUser directly so useQuery can track it
 	const services = useQuery(api.services.list, () => currentUser ? { userId: currentUser._id } : {});
 	const devices = useQuery(api.devices.list, () => currentUser ? { userId: currentUser._id } : {});
+	const userPreferences = useQuery(api.users.getPreferences, () => currentUser ? { userId: currentUser._id } : 'skip');
 	const removeService = useMutation(api.services.remove);
 	const removeDevice = useMutation(api.devices.remove);
+	const updatePreferences = useMutation(api.users.updatePreferences);
+
+	const backgroundColors = [
+		{ name: 'Default Dark', value: '#0a0e12' },
+		{ name: 'Midnight Blue', value: '#0f1419' },
+		{ name: 'Deep Purple', value: '#1a0f1e' },
+		{ name: 'Forest Green', value: '#0a1410' },
+		{ name: 'Charcoal', value: '#121212' },
+		{ name: 'Navy', value: '#0d1117' },
+		{ name: 'Dark Teal', value: '#0a1517' },
+		{ name: 'Wine', value: '#1a0a0f' },
+		{ name: 'Slate', value: '#0f1419' },
+		{ name: 'Black', value: '#000000' },
+	];
+
+	let currentBackground = $derived.by(() => {
+		const bg = userPreferences.data?.backgroundColor || '#0a0e12';
+		console.log('[currentBackground] Derived value:', bg, 'from data:', userPreferences.data);
+		return bg;
+	});
+	let currentBackgroundImage = $derived.by(() => {
+		const img = userPreferences.data?.backgroundImage;
+		console.log('[currentBackgroundImage] Derived value:', img);
+		return img;
+	});
 
 	let showServiceModal = $state(false);
 	let showDeviceModal = $state(false);
@@ -112,6 +138,166 @@
 		localStorage.setItem('startpageMode', String(startpageMode));
 	}
 
+	async function changeBackground(color: string) {
+		console.log('[changeBackground] Called with color:', color);
+		console.log('[changeBackground] currentUser:', currentUser);
+		if (!currentUser) {
+			console.log('[changeBackground] No current user, aborting');
+			return;
+		}
+		console.log('[changeBackground] Calling updatePreferences...');
+		try {
+			await updatePreferences({
+				userId: currentUser._id,
+				backgroundColor: color,
+				backgroundImage: undefined,
+			});
+			console.log('[changeBackground] Update successful');
+		} catch (error) {
+			console.error('[changeBackground] Error:', error);
+		}
+	}
+
+	async function handleImageUpload(event: Event) {
+		console.log('[handleImageUpload] Called');
+		const input = event.target as HTMLInputElement;
+		console.log('[handleImageUpload] Input:', input);
+		console.log('[handleImageUpload] Files:', input.files);
+		console.log('[handleImageUpload] currentUser:', currentUser);
+
+		if (!input.files || !input.files[0]) {
+			console.error('[handleImageUpload] No files selected');
+			return;
+		}
+
+		if (!currentUser) {
+			console.error('[handleImageUpload] No current user');
+			return;
+		}
+
+		const file = input.files[0];
+		console.log('[handleImageUpload] File:', file.name, 'Size:', file.size, 'Type:', file.type);
+
+		// Validate file type
+		if (!file.type.startsWith('image/')) {
+			console.error('[handleImageUpload] Not an image file');
+			alert('Please select an image file');
+			input.value = '';
+			return;
+		}
+
+		// Read and compress the image
+		const reader = new FileReader();
+
+		reader.onerror = (e) => {
+			console.error('[handleImageUpload] FileReader error:', e);
+			alert('Failed to read image file');
+			input.value = '';
+		};
+
+		reader.onload = async (e) => {
+			const dataUrl = e.target?.result as string;
+			console.log('[handleImageUpload] Original DataURL length:', dataUrl.length);
+
+			try {
+				// Create image element to resize
+				const img = new Image();
+				img.onload = async () => {
+					console.log('[handleImageUpload] Image loaded, dimensions:', img.width, 'x', img.height);
+
+					// Create canvas to resize image
+					const canvas = document.createElement('canvas');
+					const ctx = canvas.getContext('2d')!;
+
+					// Calculate new dimensions (max 1920x1080)
+					let width = img.width;
+					let height = img.height;
+					const maxWidth = 1920;
+					const maxHeight = 1080;
+
+					if (width > maxWidth || height > maxHeight) {
+						const ratio = Math.min(maxWidth / width, maxHeight / height);
+						width = Math.floor(width * ratio);
+						height = Math.floor(height * ratio);
+						console.log('[handleImageUpload] Resizing to:', width, 'x', height);
+					}
+
+					canvas.width = width;
+					canvas.height = height;
+					ctx.drawImage(img, 0, 0, width, height);
+
+					// Try different quality levels until we get under 800KB (to be safe with Convex 1MB limit)
+					let quality = 0.8;
+					let compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+
+					while (compressedDataUrl.length > 800 * 1024 && quality > 0.1) {
+						quality -= 0.1;
+						compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+						console.log('[handleImageUpload] Trying quality:', quality, 'Size:', compressedDataUrl.length);
+					}
+
+					if (compressedDataUrl.length > 800 * 1024) {
+						console.error('[handleImageUpload] Could not compress image enough');
+						alert('Image is too complex to compress. Please use a simpler image or smaller resolution.');
+						input.value = '';
+						return;
+					}
+
+					console.log('[handleImageUpload] Compressed DataURL length:', compressedDataUrl.length);
+					console.log('[handleImageUpload] Quality used:', quality);
+
+					try {
+						console.log('[handleImageUpload] Calling updatePreferences...');
+						await updatePreferences({
+							userId: currentUser._id,
+							backgroundColor: undefined,
+							backgroundImage: compressedDataUrl,
+						});
+						console.log('[handleImageUpload] Update successful!');
+						input.value = '';
+					} catch (error) {
+						console.error('[handleImageUpload] Error:', error);
+						alert('Failed to upload image: ' + (error as Error).message);
+						input.value = '';
+					}
+				};
+
+				img.onerror = () => {
+					console.error('[handleImageUpload] Failed to load image');
+					alert('Failed to load image');
+					input.value = '';
+				};
+
+				img.src = dataUrl;
+			} catch (error) {
+				console.error('[handleImageUpload] Error:', error);
+				alert('Failed to process image');
+				input.value = '';
+			}
+		};
+
+		console.log('[handleImageUpload] Starting to read file...');
+		reader.readAsDataURL(file);
+	}
+
+	async function clearBackground() {
+		console.log('[clearBackground] Called');
+		if (!currentUser) {
+			console.log('[clearBackground] No current user, aborting');
+			return;
+		}
+		try {
+			await updatePreferences({
+				userId: currentUser._id,
+				backgroundColor: '#0a0e12',
+				backgroundImage: undefined,
+			});
+			console.log('[clearBackground] Reset successful');
+		} catch (error) {
+			console.error('[clearBackground] Error:', error);
+		}
+	}
+
 	function closeSettings() {
 		showSettings = false;
 	}
@@ -140,9 +326,24 @@
 
 	// Check if current user is demo user
 	let isDemoUser = $derived(currentUser?.email === 'demo@selfhost-monitor.app');
+
+	// Debug effect to log background changes
+	$effect(() => {
+		console.log('[Background Debug] currentBackground:', currentBackground);
+		console.log('[Background Debug] currentBackgroundImage:', currentBackgroundImage);
+		console.log('[Background Debug] userPreferences.data:', userPreferences.data);
+	});
 </script>
 
-<div class="container" class:startpage-mode={startpageMode}>
+<div
+	class="container"
+	class:startpage-mode={startpageMode}
+	style:background-color={currentBackgroundImage ? 'transparent' : currentBackground}
+	style:background-image={currentBackgroundImage ? `url(${currentBackgroundImage})` : 'none'}
+	style:background-size={currentBackgroundImage ? 'cover' : 'auto'}
+	style:background-position={currentBackgroundImage ? 'center' : 'initial'}
+	style:background-attachment={currentBackgroundImage ? 'fixed' : 'scroll'}
+>
 	{#if !startpageMode}
 		<header>
 			<div class="header-content">
@@ -176,6 +377,45 @@
 												/>
 												<span class="toggle-switch"></span>
 											</label>
+										</div>
+
+										<div class="settings-divider"></div>
+
+										<div class="settings-option">
+											<div class="settings-label">Background</div>
+											<div class="color-grid">
+												{#each backgroundColors as color}
+													<button
+														class="color-option"
+														class:selected={currentBackground === color.value && !currentBackgroundImage}
+														style="background-color: {color.value}"
+														onclick={() => changeBackground(color.value)}
+														title={color.name}
+													>
+														{#if currentBackground === color.value && !currentBackgroundImage}
+															<svg width="12" height="12" viewBox="0 0 12 12" fill="white">
+																<path d="M10 3L4.5 8.5L2 6" stroke="white" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+															</svg>
+														{/if}
+													</button>
+												{/each}
+											</div>
+
+											<label class="upload-btn">
+												<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+													<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+													<polyline points="17 8 12 3 7 8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+													<line x1="12" y1="3" x2="12" y2="15" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+												</svg>
+												Upload Image
+												<input type="file" accept="image/*" onchange={handleImageUpload} style="display: none;" />
+											</label>
+
+											{#if currentBackgroundImage || currentBackground !== '#0a0e12'}
+												<button class="reset-btn" onclick={clearBackground}>
+													Reset to Default
+												</button>
+											{/if}
 										</div>
 									</div>
 								{/if}
@@ -230,6 +470,48 @@
 											<span class="toggle-switch"></span>
 										</label>
 									</div>
+
+									<div class="settings-divider"></div>
+
+									<div class="settings-option">
+										<div class="settings-label">Background</div>
+										<div class="color-grid">
+											{#each backgroundColors as color}
+												<button
+													class="color-option"
+													class:selected={currentBackground === color.value && !currentBackgroundImage}
+													style="background-color: {color.value}"
+													onclick={() => changeBackground(color.value)}
+													title={color.name}
+												>
+													{#if currentBackground === color.value && !currentBackgroundImage}
+														<svg width="12" height="12" viewBox="0 0 12 12" fill="white">
+															<path d="M10 3L4.5 8.5L2 6" stroke="white" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+														</svg>
+													{/if}
+												</button>
+											{/each}
+										</div>
+
+										<label class="upload-btn">
+											<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+												<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+												<polyline points="17 8 12 3 7 8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+												<line x1="12" y1="3" x2="12" y2="15" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+											</svg>
+											Upload Image
+											<input type="file" accept="image/*" onchange={handleImageUpload} style="display: none;" />
+										</label>
+
+										{#if currentBackgroundImage || currentBackground !== '#0a0e12'}
+											<button class="reset-btn" onclick={clearBackground}>
+												Reset to Default
+											</button>
+										{/if}
+									</div>
+
+									<div class="settings-divider"></div>
+
 									<div class="settings-option">
 										<button onclick={handleLogout} class="logout-btn-small">Logout</button>
 									</div>
@@ -532,13 +814,95 @@
 		border: 1px solid #3a3f47;
 		border-radius: 8px;
 		padding: 12px;
-		min-width: 200px;
+		min-width: 240px;
 		box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
 		z-index: 1000;
 	}
 
 	.settings-option {
 		padding: 8px 0;
+	}
+
+	.settings-divider {
+		height: 1px;
+		background: #3a3f47;
+		margin: 8px 0;
+	}
+
+	.settings-label {
+		font-size: 13px;
+		color: #a0a4a8;
+		margin-bottom: 10px;
+		font-weight: 500;
+	}
+
+	.color-grid {
+		display: grid;
+		grid-template-columns: repeat(5, 1fr);
+		gap: 8px;
+		margin-bottom: 10px;
+	}
+
+	.color-option {
+		width: 32px;
+		height: 32px;
+		border-radius: 6px;
+		border: 2px solid transparent;
+		cursor: pointer;
+		transition: all 0.2s;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 0;
+	}
+
+	.color-option:hover {
+		border-color: #6c757d;
+	}
+
+	.color-option.selected {
+		border-color: #d35400;
+		box-shadow: 0 0 0 2px rgba(211, 84, 0, 0.2);
+	}
+
+	.upload-btn {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 8px;
+		padding: 8px 12px;
+		background: transparent;
+		border: 1px solid #3a3f47;
+		border-radius: 6px;
+		color: #a0a4a8;
+		font-size: 13px;
+		cursor: pointer;
+		transition: all 0.2s;
+		margin-bottom: 8px;
+	}
+
+	.upload-btn:hover {
+		background: #2d3339;
+		border-color: #d35400;
+		color: #e8eaed;
+	}
+
+	.reset-btn {
+		width: 100%;
+		padding: 8px;
+		background: transparent;
+		border: 1px solid #3a3f47;
+		border-radius: 6px;
+		color: #a0a4a8;
+		font-size: 13px;
+		cursor: pointer;
+		transition: all 0.2s;
+	}
+
+	.reset-btn:hover {
+		background: rgba(192, 57, 43, 0.15);
+		border-color: #c0392b;
+		color: #c0392b;
 	}
 
 	.toggle-label {
@@ -775,9 +1139,6 @@
 	}
 
 	/* Startpage Mode Styles */
-	.startpage-mode {
-		background: #0a0e12;
-	}
 
 	.startpage-wrapper {
 		max-width: 1400px;

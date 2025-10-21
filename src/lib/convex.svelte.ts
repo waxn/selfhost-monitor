@@ -28,6 +28,16 @@ export function useQuery<T>(query: any, getArgs: () => any) {
 		const argsStr = JSON.stringify(args);
 		console.log('[useQuery] Effect triggered with args:', args, 'stringified:', argsStr);
 
+		// Skip subscription if args is 'skip'
+		if (args === 'skip') {
+			console.log('[useQuery] Skipping subscription');
+			if (currentUnsubscribe) {
+				currentUnsubscribe();
+				currentUnsubscribe = null;
+			}
+			return;
+		}
+
 		// Clean up previous subscription
 		if (currentUnsubscribe) {
 			console.log('[useQuery] Cleaning up previous subscription');

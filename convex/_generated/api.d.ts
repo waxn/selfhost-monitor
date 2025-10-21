@@ -16,6 +16,7 @@ import type * as seed from "../seed.js";
 import type * as serviceUrls from "../serviceUrls.js";
 import type * as services from "../services.js";
 import type * as uptime from "../uptime.js";
+import type * as users from "../users.js";
 
 import type {
   ApiFromModules,
@@ -40,6 +41,7 @@ declare const fullApi: ApiFromModules<{
   serviceUrls: typeof serviceUrls;
   services: typeof services;
   uptime: typeof uptime;
+  users: typeof users;
 }>;
 declare const fullApiWithMounts: typeof fullApi;
 
