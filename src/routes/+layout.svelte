@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
 	import { initConvex } from '$lib/convex.svelte';
-	import favicon from '$lib/assets/favicon.svg';
+	import favicon from '$lib/assets/favicon.ico';
 
 	let { children } = $props();
 
