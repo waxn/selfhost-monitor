@@ -46,7 +46,7 @@ export default defineSchema({
     passwordHash: v.optional(v.string()),
     // User preferences
     backgroundColor: v.optional(v.string()),
-    backgroundImage: v.optional(v.string()),
+    backgroundImage: v.optional(v.union(v.string(), v.null())),
     tileOpacity: v.optional(v.number()),
   }).index("by_name", ["name"]).index("by_email", ["email"]),
 });

@@ -5,11 +5,11 @@ export const updatePreferences = mutation({
   args: {
     userId: v.id("users"),
     backgroundColor: v.optional(v.string()),
-    backgroundImage: v.optional(v.string()),
+    backgroundImage: v.optional(v.union(v.string(), v.null())),
     tileOpacity: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const { userId, ...updates } = args;
+    const { userId, backgroundColor, backgroundImage, tileOpacity } = args;
 
     // Verify user exists
     const user = await ctx.db.get(userId);
@@ -17,7 +17,23 @@ export const updatePreferences = mutation({
       throw new Error("User not found");
     }
 
-    await ctx.db.patch(userId, updates);
+    // Build the update object
+    const patchData: any = {};
+
+    if (backgroundColor !== undefined) {
+      patchData.backgroundColor = backgroundColor;
+    }
+
+    // backgroundImage can be set to null to clear it
+    if (backgroundImage !== undefined) {
+      patchData.backgroundImage = backgroundImage;
+    }
+
+    if (tileOpacity !== undefined) {
+      patchData.tileOpacity = tileOpacity;
+    }
+
+    await ctx.db.patch(userId, patchData);
   },
 });
 

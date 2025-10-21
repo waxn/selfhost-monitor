@@ -151,11 +151,13 @@
 			return;
 		}
 		console.log('[changeBackground] Calling updatePreferences...');
+		console.log('[changeBackground] Current backgroundImage:', currentBackgroundImage);
 		try {
+			// Always clear the background image when selecting a color (use null to clear)
 			await updatePreferences({
 				userId: currentUser._id,
 				backgroundColor: color,
-				backgroundImage: undefined,
+				backgroundImage: null,
 			});
 			console.log('[changeBackground] Update successful');
 		} catch (error) {
@@ -255,7 +257,6 @@
 						console.log('[handleImageUpload] Calling updatePreferences...');
 						await updatePreferences({
 							userId: currentUser._id,
-							backgroundColor: undefined,
 							backgroundImage: compressedDataUrl,
 						});
 						console.log('[handleImageUpload] Update successful!');
@@ -295,7 +296,7 @@
 			await updatePreferences({
 				userId: currentUser._id,
 				backgroundColor: '#0a0e12',
-				backgroundImage: undefined,
+				backgroundImage: null,
 			});
 			console.log('[clearBackground] Reset successful');
 		} catch (error) {
