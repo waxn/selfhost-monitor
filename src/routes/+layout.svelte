@@ -1,12 +1,14 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
 	import { initConvex } from '$lib/convex.svelte';
+	import { injectAnalytics } from '@vercel/analytics/sveltekit';
 	import favicon from '$lib/assets/favicon.ico';
 
 	let { children } = $props();
 
 	if (browser) {
 		initConvex(import.meta.env.VITE_CONVEX_URL);
+		injectAnalytics();
 	}
 </script>
 

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
+	import favicon from '$lib/assets/favicon.ico';
 
 	let showContent = $state(false);
 	let activeFeature = $state(0);
@@ -11,7 +12,7 @@
 		}, 100);
 
 		const interval = setInterval(() => {
-			activeFeature = (activeFeature + 1) % 3;
+			activeFeature = (activeFeature + 1) % 4;
 		}, 3000);
 
 		return () => clearInterval(interval);
@@ -21,17 +22,22 @@
 		{
 			icon: '📡',
 			title: 'Device Organization',
-			description: 'Group your services by device or server for easy management and monitoring'
+			description: 'Group your services by device or server. Click any device to filter and view only its services.'
 		},
 		{
 			icon: '🔗',
 			title: 'Multiple Endpoints',
-			description: 'Monitor multiple URLs per service with custom labels and ping intervals'
+			description: 'Monitor multiple URLs per service with custom labels, ping intervals, and response time tracking.'
 		},
 		{
 			icon: '⚡',
 			title: 'Live Status Tracking',
-			description: 'See real-time status indicators and response times for all your endpoints'
+			description: 'Real-time uptime monitoring with automated health checks and instant status updates.'
+		},
+		{
+			icon: '🏠',
+			title: 'Startpage Mode',
+			description: 'Transform your dashboard into a browser start page with integrated web search and quick service access.'
 		}
 	];
 </script>
@@ -39,66 +45,37 @@
 <div class="landing">
 	<!-- Hero Section -->
 	<section class="hero" class:show={showContent}>
-		<div class="hero-background">
-			<div class="gradient-orb orb-1"></div>
-			<div class="gradient-orb orb-2"></div>
-			<div class="gradient-orb orb-3"></div>
-		</div>
-
 		<div class="hero-content">
-			<div class="logo">
-				<div class="logo-icon">📡</div>
-				<h1 class="logo-text">SelfHost Monitor</h1>
-			</div>
+			<img src={favicon} alt="SelfHost Monitor" class="hero-logo" />
 
-			<p class="tagline">Keep your self-hosted services running smoothly</p>
+			<h1 class="hero-title">SelfHost Monitor</h1>
 
-			<p class="description">
-				Organize your services by device, monitor multiple endpoints, and track their status—all in one
-				beautiful dashboard.
+			<p class="hero-subtitle">
+				Monitor your self-hosted services with style
 			</p>
 
 			<div class="cta-buttons">
 				<button class="cta-primary" onclick={() => goto('/auth?mode=demo')}>
 					Try Demo
-					<svg
-						width="20"
-						height="20"
-						viewBox="0 0 20 20"
-						fill="none"
-						xmlns="http://www.w3.org/2000/svg"
-					>
-						<path
-							d="M7.5 15L12.5 10L7.5 5"
-							stroke="currentColor"
-							stroke-width="2"
-							stroke-linecap="round"
-							stroke-linejoin="round"
-						/>
-					</svg>
 				</button>
 				<button class="cta-secondary" onclick={() => goto('/auth')}>
 					Sign Up
 				</button>
-				<button class="cta-secondary login-btn" onclick={() => goto('/auth?mode=login')}>
+				<button class="cta-secondary" onclick={() => goto('/auth?mode=login')}>
 					Login
 				</button>
 			</div>
-		</div>
-
-		<div class="scroll-indicator">
-			<div class="scroll-arrow"></div>
 		</div>
 	</section>
 
 	<!-- Features Section -->
 	<section class="features">
 		<div class="features-content">
-			<h2 class="section-title">Everything you need to monitor your infrastructure</h2>
+			<h2 class="section-title">Key Features</h2>
 
 			<div class="features-grid">
-				{#each features as feature, i}
-					<div class="feature-card" class:active={activeFeature === i}>
+				{#each features as feature}
+					<div class="feature-card">
 						<div class="feature-icon">{feature.icon}</div>
 						<h3>{feature.title}</h3>
 						<p>{feature.description}</p>
@@ -226,6 +203,93 @@
 		</div>
 	</section>
 
+	<!-- Startpage Mode Section -->
+	<section class="startpage-showcase">
+		<div class="startpage-showcase-content">
+			<div class="startpage-text">
+				<div class="badge">New Feature</div>
+				<h2>Startpage Mode</h2>
+				<p class="large-text">
+					Transform your dashboard into your browser's start page. Search the web with DuckDuckGo,
+					access your services instantly, and monitor your infrastructure—all from one beautiful interface.
+				</p>
+				<ul class="feature-list">
+					<li>
+						<svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+							<path d="M7 10L9 12L13 8M19 10C19 14.9706 14.9706 19 10 19C5.02944 19 1 14.9706 1 10C1 5.02944 5.02944 1 10 1C14.9706 1 19 5.02944 19 10Z" stroke="#d35400" stroke-width="2" stroke-linecap="round"/>
+						</svg>
+						<span>Integrated DuckDuckGo search with custom dark theme</span>
+					</li>
+					<li>
+						<svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+							<path d="M7 10L9 12L13 8M19 10C19 14.9706 14.9706 19 10 19C5.02944 19 1 14.9706 1 10C1 5.02944 5.02944 1 10 1C14.9706 1 19 5.02944 19 10Z" stroke="#d35400" stroke-width="2" stroke-linecap="round"/>
+						</svg>
+						<span>Click devices to filter services instantly</span>
+					</li>
+					<li>
+						<svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+							<path d="M7 10L9 12L13 8M19 10C19 14.9706 14.9706 19 10 19C5.02944 19 1 14.9706 1 10C1 5.02944 5.02944 1 10 1C14.9706 1 19 5.02944 19 10Z" stroke="#d35400" stroke-width="2" stroke-linecap="round"/>
+						</svg>
+						<span>Clean interface with no top bar—maximum screen space</span>
+					</li>
+					<li>
+						<svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+							<path d="M7 10L9 12L13 8M19 10C19 14.9706 14.9706 19 10 19C5.02944 19 1 14.9706 1 10C1 5.02944 5.02944 1 10 1C14.9706 1 19 5.02944 19 10Z" stroke="#d35400" stroke-width="2" stroke-linecap="round"/>
+						</svg>
+						<span>Toggle on/off anytime from settings</span>
+					</li>
+				</ul>
+			</div>
+			<div class="startpage-visual">
+				<div class="startpage-mockup">
+					<div class="mockup-actions">
+						<div class="mockup-action-btn">+</div>
+						<div class="mockup-action-btn">+</div>
+						<div class="mockup-action-btn">⚙</div>
+					</div>
+					<div class="mockup-search">
+						<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6c757d">
+							<circle cx="11" cy="11" r="8" stroke-width="2"/>
+							<path d="m21 21-4.35-4.35" stroke-width="2" stroke-linecap="round"/>
+						</svg>
+						<span>Search the web</span>
+					</div>
+					<div class="mockup-services">
+						<div class="mockup-label">Services</div>
+						<div class="mockup-service-grid">
+							<div class="mockup-service">
+								<div class="mockup-service-icon" style="background: linear-gradient(135deg, #0082c9 0%, #0066a1 100%);">N</div>
+								<div class="mockup-service-name">Nextcloud</div>
+								<div class="mockup-url-status up"></div>
+							</div>
+							<div class="mockup-service">
+								<div class="mockup-service-icon" style="background: linear-gradient(135deg, #e5a00d 0%, #cc8b00 100%);">P</div>
+								<div class="mockup-service-name">Plex</div>
+								<div class="mockup-url-status up"></div>
+							</div>
+							<div class="mockup-service">
+								<div class="mockup-service-icon" style="background: linear-gradient(135deg, #fc6d26 0%, #e24329 100%);">G</div>
+								<div class="mockup-service-name">GitLab</div>
+								<div class="mockup-url-status up"></div>
+							</div>
+						</div>
+					</div>
+					<div class="mockup-devices">
+						<div class="mockup-label">Devices</div>
+						<div class="mockup-device-item selected">
+							<div class="mockup-device-name">Home Server</div>
+							<div class="mockup-device-desc">Main infrastructure</div>
+						</div>
+						<div class="mockup-device-item">
+							<div class="mockup-device-name">VPS-01</div>
+							<div class="mockup-device-desc">Cloud services</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</section>
+
 	<!-- CTA Section -->
 	<section class="final-cta">
 		<div class="final-cta-content">
@@ -296,251 +360,91 @@
 	/* Hero Section */
 	.hero {
 		min-height: 100vh;
-		position: relative;
 		display: flex;
-		flex-direction: column;
 		align-items: center;
 		justify-content: center;
-		padding: 40px 20px;
-		overflow: hidden;
+		padding: 60px 20px;
+		background: linear-gradient(180deg, #0a0e12 0%, #12161c 100%);
 		opacity: 0;
-		transform: translateY(20px);
-		transition:
-			opacity 0.8s ease-out,
-			transform 0.8s ease-out;
+		animation: fadeIn 0.6s ease-out 0.1s forwards;
 	}
 
-	.hero.show {
-		opacity: 1;
-		transform: translateY(0);
-	}
-
-	.hero-background {
-		position: absolute;
-		inset: 0;
-		overflow: hidden;
-		z-index: 0;
-	}
-
-	.gradient-orb {
-		position: absolute;
-		border-radius: 50%;
-		filter: blur(80px);
-		opacity: 0.3;
-		animation: float 20s ease-in-out infinite;
-	}
-
-	.orb-1 {
-		width: 500px;
-		height: 500px;
-		background: radial-gradient(circle, #d35400 0%, transparent 70%);
-		top: -250px;
-		right: -250px;
-		animation-delay: 0s;
-	}
-
-	.orb-2 {
-		width: 400px;
-		height: 400px;
-		background: radial-gradient(circle, #3498db 0%, transparent 70%);
-		bottom: -200px;
-		left: -200px;
-		animation-delay: -7s;
-	}
-
-	.orb-3 {
-		width: 350px;
-		height: 350px;
-		background: radial-gradient(circle, #9b59b6 0%, transparent 70%);
-		top: 50%;
-		left: 50%;
-		transform: translate(-50%, -50%);
-		animation-delay: -14s;
-	}
-
-	@keyframes float {
-		0%,
-		100% {
-			transform: translate(0, 0) scale(1);
-		}
-		33% {
-			transform: translate(30px, -30px) scale(1.1);
-		}
-		66% {
-			transform: translate(-20px, 20px) scale(0.9);
+	@keyframes fadeIn {
+		to {
+			opacity: 1;
 		}
 	}
 
 	.hero-content {
-		position: relative;
-		z-index: 1;
-		max-width: 900px;
+		max-width: 700px;
 		text-align: center;
 	}
 
-	.logo {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		gap: 16px;
-		margin-bottom: 24px;
-		animation: slideDown 0.6s ease-out 0.2s both;
+	.hero-logo {
+		width: 80px;
+		height: 80px;
+		margin-bottom: 32px;
+		opacity: 0.95;
 	}
 
-	.logo-icon {
-		font-size: 48px;
-		animation: bounce 2s ease-in-out infinite;
-	}
-
-	@keyframes bounce {
-		0%,
-		100% {
-			transform: translateY(0);
-		}
-		50% {
-			transform: translateY(-10px);
-		}
-	}
-
-	.logo-text {
-		font-size: 48px;
-		font-weight: 800;
-		margin: 0;
-		background: linear-gradient(135deg, #d35400 0%, #e67e22 100%);
-		-webkit-background-clip: text;
-		-webkit-text-fill-color: transparent;
-		background-clip: text;
-	}
-
-	.tagline {
-		font-size: 32px;
-		font-weight: 600;
-		margin: 0 0 24px 0;
+	.hero-title {
+		font-size: 56px;
+		font-weight: 700;
+		margin: 0 0 20px 0;
 		color: #e8eaed;
-		animation: slideDown 0.6s ease-out 0.3s both;
+		letter-spacing: -0.5px;
 	}
 
-	.description {
-		font-size: 20px;
+	.hero-subtitle {
+		font-size: 22px;
 		color: #a0a4a8;
 		margin: 0 0 48px 0;
-		line-height: 1.6;
-		animation: slideDown 0.6s ease-out 0.4s both;
-	}
-
-	@keyframes slideDown {
-		from {
-			opacity: 0;
-			transform: translateY(-20px);
-		}
-		to {
-			opacity: 1;
-			transform: translateY(0);
-		}
+		font-weight: 400;
 	}
 
 	.cta-buttons {
 		display: flex;
-		gap: 16px;
+		gap: 12px;
 		justify-content: center;
 		flex-wrap: wrap;
-		animation: slideUp 0.6s ease-out 0.5s both;
-	}
-
-	@keyframes slideUp {
-		from {
-			opacity: 0;
-			transform: translateY(20px);
-		}
-		to {
-			opacity: 1;
-			transform: translateY(0);
-		}
 	}
 
 	.cta-primary,
 	.cta-secondary {
-		padding: 16px 32px;
-		border-radius: 12px;
-		font-size: 18px;
-		font-weight: 600;
+		padding: 14px 28px;
+		border-radius: 8px;
+		font-size: 16px;
+		font-weight: 500;
 		cursor: pointer;
-		transition: all 0.3s ease;
+		transition: all 0.2s;
 		border: none;
-		display: flex;
-		align-items: center;
-		gap: 8px;
 	}
 
 	.cta-primary {
-		background: linear-gradient(135deg, #d35400 0%, #c54d00 100%);
+		background: #d35400;
 		color: white;
-		box-shadow:
-			0 4px 16px rgba(211, 84, 0, 0.4),
-			0 0 40px rgba(211, 84, 0, 0.2);
 	}
 
 	.cta-primary:hover {
-		transform: translateY(-2px);
-		box-shadow:
-			0 8px 24px rgba(211, 84, 0, 0.6),
-			0 0 60px rgba(211, 84, 0, 0.3);
+		background: #e05f00;
+		transform: translateY(-1px);
 	}
 
 	.cta-secondary {
-		background: rgba(255, 255, 255, 0.05);
-		backdrop-filter: blur(10px);
-		border: 1px solid rgba(255, 255, 255, 0.1);
+		background: transparent;
+		border: 1px solid #3a3f47;
 		color: #e8eaed;
 	}
 
 	.cta-secondary:hover {
-		background: rgba(255, 255, 255, 0.1);
-		border-color: #d35400;
-		transform: translateY(-2px);
-		box-shadow: 0 8px 24px rgba(211, 84, 0, 0.3);
-	}
-
-	.scroll-indicator {
-		position: absolute;
-		bottom: 40px;
-		left: 50%;
-		transform: translateX(-50%);
-		animation: fadeIn 1s ease-out 1s both;
-	}
-
-	@keyframes fadeIn {
-		from {
-			opacity: 0;
-		}
-		to {
-			opacity: 1;
-		}
-	}
-
-	.scroll-arrow {
-		width: 24px;
-		height: 24px;
-		border-right: 2px solid #d35400;
-		border-bottom: 2px solid #d35400;
-		transform: rotate(45deg);
-		animation: scrollBounce 2s ease-in-out infinite;
-	}
-
-	@keyframes scrollBounce {
-		0%,
-		100% {
-			transform: rotate(45deg) translateY(0);
-		}
-		50% {
-			transform: rotate(45deg) translateY(10px);
-		}
+		background: #1a1e24;
+		border-color: #4a5059;
 	}
 
 	/* Features Section */
 	.features {
-		padding: 120px 20px;
-		background: linear-gradient(180deg, #0a0e12 0%, #1a1f26 100%);
+		padding: 100px 20px;
+		background: #0a0e12;
 	}
 
 	.features-content {
@@ -549,62 +453,48 @@
 	}
 
 	.section-title {
-		font-size: 42px;
-		font-weight: 700;
+		font-size: 36px;
+		font-weight: 600;
 		text-align: center;
-		margin: 0 0 80px 0;
-		background: linear-gradient(135deg, #e8eaed 0%, #a0a4a8 100%);
-		-webkit-background-clip: text;
-		-webkit-text-fill-color: transparent;
-		background-clip: text;
+		margin: 0 0 60px 0;
+		color: #e8eaed;
 	}
 
 	.features-grid {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-		gap: 40px;
+		grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+		gap: 24px;
 	}
 
 	.feature-card {
-		background: rgba(255, 255, 255, 0.02);
-		border: 1px solid rgba(255, 255, 255, 0.05);
-		border-radius: 24px;
-		padding: 40px;
+		background: #12161c;
+		border: 1px solid #1e2329;
+		border-radius: 12px;
+		padding: 32px;
 		text-align: center;
-		transition: all 0.4s ease;
-		backdrop-filter: blur(10px);
-	}
-
-	.feature-card.active {
-		background: rgba(211, 84, 0, 0.1);
-		border-color: #d35400;
-		transform: translateY(-8px);
-		box-shadow:
-			0 16px 40px rgba(211, 84, 0, 0.2),
-			0 0 60px rgba(211, 84, 0, 0.1);
+		transition: all 0.2s;
 	}
 
 	.feature-card:hover {
-		transform: translateY(-8px);
-		border-color: #d35400;
+		border-color: #3a3f47;
+		transform: translateY(-2px);
 	}
 
 	.feature-icon {
-		font-size: 64px;
-		margin-bottom: 24px;
+		font-size: 48px;
+		margin-bottom: 20px;
 		display: inline-block;
-		animation: bounce 2s ease-in-out infinite;
 	}
 
 	.feature-card h3 {
-		font-size: 24px;
+		font-size: 20px;
 		font-weight: 600;
-		margin: 0 0 16px 0;
+		margin: 0 0 12px 0;
 		color: #e8eaed;
 	}
 
 	.feature-card p {
-		font-size: 16px;
+		font-size: 15px;
 		color: #a0a4a8;
 		line-height: 1.6;
 		margin: 0;
@@ -613,7 +503,9 @@
 	/* Stats Section */
 	.stats {
 		padding: 80px 20px;
-		background: #0a0e12;
+		background: #0d1117;
+		border-top: 1px solid #1e2329;
+		border-bottom: 1px solid #1e2329;
 	}
 
 	.stats-content {
@@ -631,31 +523,28 @@
 	}
 
 	.stat-number {
-		font-size: 56px;
-		font-weight: 800;
-		background: linear-gradient(135deg, #d35400 0%, #e67e22 100%);
-		-webkit-background-clip: text;
-		-webkit-text-fill-color: transparent;
-		background-clip: text;
+		font-size: 48px;
+		font-weight: 700;
+		color: #d35400;
 		margin-bottom: 8px;
 	}
 
 	.stat-label {
-		font-size: 18px;
+		font-size: 16px;
 		color: #a0a4a8;
-		font-weight: 500;
+		font-weight: 400;
 	}
 
 	.stat-divider {
 		width: 1px;
-		height: 80px;
-		background: linear-gradient(180deg, transparent 0%, #3a3f47 50%, transparent 100%);
+		height: 60px;
+		background: #1e2329;
 	}
 
 	/* Benefits Section */
 	.benefits {
-		padding: 120px 20px;
-		background: linear-gradient(180deg, #0a0e12 0%, #1a1f26 100%);
+		padding: 100px 20px;
+		background: #0a0e12;
 	}
 
 	.benefits-content {
@@ -921,27 +810,277 @@
 		margin: 0;
 	}
 
-	/* Final CTA Section */
-	.final-cta {
-		padding: 120px 20px;
-		background: linear-gradient(135deg, #1a1f26 0%, #0a0e12 100%);
-		position: relative;
-		overflow: hidden;
+	/* Startpage Showcase Section */
+	.startpage-showcase {
+		padding: 100px 20px;
+		background: #0d1117;
+		border-top: 1px solid #1e2329;
 	}
 
-	.final-cta::before {
+	.startpage-showcase-content {
+		max-width: 1200px;
+		margin: 0 auto;
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 80px;
+		align-items: center;
+		position: relative;
+		z-index: 1;
+	}
+
+	.startpage-text {
+		padding-right: 20px;
+	}
+
+	.badge {
+		display: inline-block;
+		padding: 6px 16px;
+		background: linear-gradient(135deg, rgba(211, 84, 0, 0.2) 0%, rgba(211, 84, 0, 0.1) 100%);
+		border: 1px solid #d35400;
+		border-radius: 20px;
+		color: #d35400;
+		font-size: 13px;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.5px;
+		margin-bottom: 24px;
+	}
+
+	.startpage-text h2 {
+		font-size: 42px;
+		font-weight: 700;
+		margin: 0 0 24px 0;
+		color: #e8eaed;
+	}
+
+	.large-text {
+		font-size: 20px;
+		color: #a0a4a8;
+		line-height: 1.8;
+		margin: 0 0 32px 0;
+	}
+
+	.feature-list {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+	}
+
+	.feature-list li {
+		display: flex;
+		align-items: flex-start;
+		gap: 12px;
+		font-size: 16px;
+		color: #e8eaed;
+		line-height: 1.6;
+	}
+
+	.feature-list svg {
+		flex-shrink: 0;
+		margin-top: 2px;
+	}
+
+	.startpage-visual {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+	}
+
+	.startpage-mockup {
+		width: 100%;
+		max-width: 500px;
+		background: linear-gradient(145deg, #1e2329 0%, #0a0e12 100%);
+		border: 1px solid #3a3f47;
+		border-radius: 20px;
+		padding: 30px;
+		box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+		position: relative;
+	}
+
+	.mockup-actions {
+		position: absolute;
+		top: 24px;
+		right: 24px;
+		display: flex;
+		gap: 8px;
+	}
+
+	.mockup-action-btn {
+		width: 36px;
+		height: 36px;
+		background: rgba(45, 51, 57, 0.8);
+		border: 1px solid #3a3f47;
+		border-radius: 8px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		color: #6c757d;
+		font-size: 18px;
+		transition: all 0.2s;
+	}
+
+	.mockup-action-btn:hover {
+		border-color: #d35400;
+		color: #d35400;
+	}
+
+	.mockup-search {
+		width: 100%;
+		padding: 14px 20px 14px 48px;
+		background: rgba(45, 51, 57, 0.8);
+		border: 2px solid #3a3f47;
+		border-radius: 24px;
+		margin-bottom: 32px;
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		position: relative;
+		transition: all 0.3s;
+	}
+
+	.mockup-search svg {
+		position: absolute;
+		left: 16px;
+	}
+
+	.mockup-search span {
+		color: #6c757d;
+		font-size: 14px;
+	}
+
+	.mockup-search:hover {
+		border-color: #d35400;
+		box-shadow: 0 4px 16px rgba(211, 84, 0, 0.2);
+	}
+
+	.mockup-label {
+		font-size: 15px;
+		font-weight: 600;
+		color: #e8eaed;
+		margin-bottom: 12px;
+	}
+
+	.mockup-services {
+		margin-bottom: 24px;
+	}
+
+	.mockup-service-grid {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: 12px;
+	}
+
+	.mockup-service {
+		background: linear-gradient(145deg, #1e2329 0%, #1a1e24 100%);
+		border: 1px solid #3a3f47;
+		border-radius: 12px;
+		padding: 16px 10px;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 8px;
+		transition: all 0.2s;
+	}
+
+	.mockup-service:hover {
+		border-color: #d35400;
+		transform: translateY(-2px);
+	}
+
+	.mockup-service-icon {
+		width: 36px;
+		height: 36px;
+		border-radius: 8px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 16px;
+		font-weight: bold;
+		color: white;
+	}
+
+	.mockup-service-name {
+		font-size: 11px;
+		font-weight: 600;
+		color: #e8eaed;
+	}
+
+	.mockup-url-status {
+		width: 100%;
+		height: 20px;
+		background: #2d3339;
+		border: 1px solid #3a3f47;
+		border-radius: 5px;
+		position: relative;
+	}
+
+	.mockup-url-status::before {
 		content: '';
 		position: absolute;
-		top: 0;
-		left: 0;
-		right: 0;
-		height: 1px;
-		background: linear-gradient(
-			90deg,
-			transparent 0%,
-			#d35400 50%,
-			transparent 100%
-		);
+		left: 6px;
+		top: 50%;
+		transform: translateY(-50%);
+		width: 5px;
+		height: 5px;
+		border-radius: 50%;
+		background: #229954;
+		box-shadow: 0 0 6px rgba(34, 153, 84, 0.6);
+	}
+
+	.mockup-url-status.up::before {
+		background: #229954;
+		box-shadow: 0 0 6px rgba(34, 153, 84, 0.6);
+	}
+
+	.mockup-devices {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+	}
+
+	.mockup-device-item {
+		background: #2d3339;
+		border: 1px solid #3a3f47;
+		border-radius: 10px;
+		padding: 12px 14px;
+		transition: all 0.2s;
+		cursor: pointer;
+	}
+
+	.mockup-device-item:hover {
+		border-color: #d35400;
+	}
+
+	.mockup-device-item.selected {
+		border-color: #d35400;
+		background: linear-gradient(145deg, #343a41 0%, #2d3339 100%);
+		box-shadow: 0 0 16px rgba(211, 84, 0, 0.3);
+	}
+
+	.mockup-device-item.selected .mockup-device-name {
+		color: #d35400;
+	}
+
+	.mockup-device-name {
+		font-size: 13px;
+		font-weight: 600;
+		color: #e8eaed;
+		margin-bottom: 2px;
+	}
+
+	.mockup-device-desc {
+		font-size: 11px;
+		color: #6c757d;
+	}
+
+	/* Final CTA Section */
+	.final-cta {
+		padding: 100px 20px;
+		background: #0a0e12;
+		border-top: 1px solid #1e2329;
 	}
 
 	.final-cta-content {
@@ -951,26 +1090,23 @@
 	}
 
 	.final-cta h2 {
-		font-size: 48px;
-		font-weight: 800;
-		margin: 0 0 24px 0;
-		background: linear-gradient(135deg, #e8eaed 0%, #a0a4a8 100%);
-		-webkit-background-clip: text;
-		-webkit-text-fill-color: transparent;
-		background-clip: text;
+		font-size: 36px;
+		font-weight: 600;
+		margin: 0 0 16px 0;
+		color: #e8eaed;
 	}
 
 	.final-cta p {
-		font-size: 20px;
+		font-size: 18px;
 		color: #a0a4a8;
-		margin: 0 0 48px 0;
+		margin: 0 0 40px 0;
 	}
 
 	/* Footer */
 	.footer {
 		padding: 60px 20px;
 		background: #0a0e12;
-		border-top: 1px solid rgba(255, 255, 255, 0.05);
+		border-top: 1px solid #1e2329;
 	}
 
 	.footer-content {
@@ -1033,16 +1169,17 @@
 
 	/* Responsive */
 	@media (max-width: 768px) {
-		.logo-text {
-			font-size: 32px;
+		.hero-logo {
+			width: 64px;
+			height: 64px;
 		}
 
-		.tagline {
-			font-size: 24px;
+		.hero-title {
+			font-size: 40px;
 		}
 
-		.description {
-			font-size: 16px;
+		.hero-subtitle {
+			font-size: 18px;
 		}
 
 		.section-title {
@@ -1074,6 +1211,42 @@
 		.dashboard-preview,
 		.endpoint-preview {
 			max-width: 100%;
+		}
+
+		.startpage-showcase {
+			padding: 80px 20px;
+		}
+
+		.startpage-showcase-content {
+			grid-template-columns: 1fr;
+			gap: 40px;
+		}
+
+		.startpage-text {
+			padding-right: 0;
+		}
+
+		.startpage-text h2 {
+			font-size: 36px;
+		}
+
+		.large-text {
+			font-size: 18px;
+		}
+
+		.mockup-service-grid {
+			grid-template-columns: 1fr;
+		}
+
+		.mockup-actions {
+			top: 16px;
+			right: 16px;
+		}
+
+		.mockup-action-btn {
+			width: 32px;
+			height: 32px;
+			font-size: 16px;
 		}
 	}
 </style>
