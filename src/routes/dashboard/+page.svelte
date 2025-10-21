@@ -7,6 +7,7 @@
 	import DeviceModal from '$lib/components/DeviceModal.svelte';
 	import DemoBanner from '$lib/components/DemoBanner.svelte';
 	import type { Id } from '../../../convex/_generated/dataModel';
+	import favicon from '$lib/assets/favicon.ico';
 
 	let currentUser = $state<any>(null);
 	let showSettings = $state(false);
@@ -145,7 +146,10 @@
 	{#if !startpageMode}
 		<header>
 			<div class="header-content">
-				<h1>Service Monitor</h1>
+				<a href="/" class="logo-link">
+					<img src={favicon} alt="SelfHost Monitor" class="header-logo" />
+					<h1>Service Monitor</h1>
+				</a>
 				<div class="header-actions">
 					<button onclick={openAddDevice} class="secondary-btn">+ Add Device</button>
 					<button onclick={openAddService} class="primary-btn">+ Add Service</button>
@@ -188,6 +192,9 @@
 		{#if startpageMode}
 			<!-- Startpage Mode Layout -->
 			<div class="startpage-header">
+				<a href="/" class="startpage-logo-link">
+					<img src={favicon} alt="SelfHost Monitor" class="startpage-logo" />
+				</a>
 				<div class="startpage-actions">
 					<button onclick={openAddDevice} class="icon-btn-large" title="Add Device">
 						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -463,6 +470,23 @@
 		justify-content: space-between;
 		align-items: center;
 		gap: 20px;
+	}
+
+	.logo-link {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		text-decoration: none;
+		transition: opacity 0.2s;
+	}
+
+	.logo-link:hover {
+		opacity: 0.8;
+	}
+
+	.header-logo {
+		width: 32px;
+		height: 32px;
 	}
 
 	h1 {
@@ -769,6 +793,22 @@
 		margin-bottom: 64px;
 	}
 
+	.startpage-logo-link {
+		position: absolute;
+		top: 24px;
+		left: 24px;
+		transition: opacity 0.2s;
+	}
+
+	.startpage-logo-link:hover {
+		opacity: 0.8;
+	}
+
+	.startpage-logo {
+		width: 40px;
+		height: 40px;
+	}
+
 	.startpage-actions {
 		display: flex;
 		gap: 12px;
@@ -974,6 +1014,16 @@
 
 		.startpage-header {
 			margin-bottom: 40px;
+		}
+
+		.startpage-logo-link {
+			top: 16px;
+			left: 16px;
+		}
+
+		.startpage-logo {
+			width: 36px;
+			height: 36px;
 		}
 
 		.startpage-actions {
