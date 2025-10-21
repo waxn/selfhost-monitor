@@ -47,5 +47,6 @@ export default defineSchema({
     // User preferences
     backgroundColor: v.optional(v.string()),
     backgroundImage: v.optional(v.string()),
+    tileOpacity: v.optional(v.number()),
   }).index("by_name", ["name"]).index("by_email", ["email"]),
 });

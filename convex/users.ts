@@ -6,6 +6,7 @@ export const updatePreferences = mutation({
     userId: v.id("users"),
     backgroundColor: v.optional(v.string()),
     backgroundImage: v.optional(v.string()),
+    tileOpacity: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const { userId, ...updates } = args;
@@ -29,6 +30,7 @@ export const getPreferences = query({
     return {
       backgroundColor: user.backgroundColor,
       backgroundImage: user.backgroundImage,
+      tileOpacity: user.tileOpacity,
     };
   },
 });

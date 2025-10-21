@@ -115,10 +115,11 @@
 <style>
 	.service-card {
 		position: relative;
-		background: linear-gradient(145deg, #1e2329 0%, #1a1e24 100%);
-		border: 1px solid #3a3f47;
+		background: linear-gradient(145deg, rgba(30, 35, 41, var(--tile-opacity, 1)) 0%, rgba(26, 30, 36, var(--tile-opacity, 1)) 100%);
+		border: 1px solid rgba(58, 63, 71, var(--tile-opacity, 1));
 		border-radius: 16px;
 		padding: 24px;
+		backdrop-filter: blur(10px);
 		transition: all 0.3s ease;
 		display: flex;
 		flex-direction: column;

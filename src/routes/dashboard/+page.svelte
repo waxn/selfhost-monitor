@@ -86,6 +86,11 @@
 		console.log('[currentBackgroundImage] Derived value:', img);
 		return img;
 	});
+	let currentTileOpacity = $derived.by(() => {
+		const opacity = userPreferences.data?.tileOpacity ?? 1;
+		console.log('[currentTileOpacity] Derived value:', opacity);
+		return opacity;
+	});
 
 	let showServiceModal = $state(false);
 	let showDeviceModal = $state(false);
@@ -298,6 +303,23 @@
 		}
 	}
 
+	async function changeTileOpacity(opacity: number) {
+		console.log('[changeTileOpacity] Called with opacity:', opacity);
+		if (!currentUser) {
+			console.log('[changeTileOpacity] No current user, aborting');
+			return;
+		}
+		try {
+			await updatePreferences({
+				userId: currentUser._id,
+				tileOpacity: opacity,
+			});
+			console.log('[changeTileOpacity] Update successful');
+		} catch (error) {
+			console.error('[changeTileOpacity] Error:', error);
+		}
+	}
+
 	function closeSettings() {
 		showSettings = false;
 	}
@@ -343,6 +365,7 @@
 	style:background-size={currentBackgroundImage ? 'cover' : 'auto'}
 	style:background-position={currentBackgroundImage ? 'center' : 'initial'}
 	style:background-attachment={currentBackgroundImage ? 'fixed' : 'scroll'}
+	style:--tile-opacity={currentTileOpacity}
 >
 	{#if !startpageMode}
 		<header>
@@ -416,6 +439,24 @@
 													Reset to Default
 												</button>
 											{/if}
+										</div>
+
+										<div class="settings-divider"></div>
+
+										<div class="settings-option">
+											<div class="settings-label">Tile Transparency</div>
+											<div class="opacity-slider-container">
+												<input
+													type="range"
+													min="0.1"
+													max="1"
+													step="0.05"
+													value={currentTileOpacity}
+													oninput={(e) => changeTileOpacity(parseFloat((e.target as HTMLInputElement).value))}
+													class="opacity-slider"
+												/>
+												<div class="opacity-value">{Math.round(currentTileOpacity * 100)}%</div>
+											</div>
 										</div>
 									</div>
 								{/if}
@@ -508,6 +549,24 @@
 												Reset to Default
 											</button>
 										{/if}
+									</div>
+
+									<div class="settings-divider"></div>
+
+									<div class="settings-option">
+										<div class="settings-label">Tile Transparency</div>
+										<div class="opacity-slider-container">
+											<input
+												type="range"
+												min="0.1"
+												max="1"
+												step="0.05"
+												value={currentTileOpacity}
+												oninput={(e) => changeTileOpacity(parseFloat((e.target as HTMLInputElement).value))}
+												class="opacity-slider"
+											/>
+											<div class="opacity-value">{Math.round(currentTileOpacity * 100)}%</div>
+										</div>
 									</div>
 
 									<div class="settings-divider"></div>
@@ -905,6 +964,63 @@
 		color: #c0392b;
 	}
 
+	.opacity-slider-container {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		margin-top: 8px;
+	}
+
+	.opacity-slider {
+		flex: 1;
+		-webkit-appearance: none;
+		appearance: none;
+		height: 6px;
+		background: #3a3f47;
+		border-radius: 3px;
+		outline: none;
+		cursor: pointer;
+	}
+
+	.opacity-slider::-webkit-slider-thumb {
+		-webkit-appearance: none;
+		appearance: none;
+		width: 18px;
+		height: 18px;
+		background: linear-gradient(135deg, #d35400 0%, #c54d00 100%);
+		border-radius: 50%;
+		cursor: pointer;
+		transition: all 0.2s;
+	}
+
+	.opacity-slider::-webkit-slider-thumb:hover {
+		transform: scale(1.2);
+		box-shadow: 0 0 8px rgba(211, 84, 0, 0.6);
+	}
+
+	.opacity-slider::-moz-range-thumb {
+		width: 18px;
+		height: 18px;
+		background: linear-gradient(135deg, #d35400 0%, #c54d00 100%);
+		border: none;
+		border-radius: 50%;
+		cursor: pointer;
+		transition: all 0.2s;
+	}
+
+	.opacity-slider::-moz-range-thumb:hover {
+		transform: scale(1.2);
+		box-shadow: 0 0 8px rgba(211, 84, 0, 0.6);
+	}
+
+	.opacity-value {
+		min-width: 45px;
+		text-align: right;
+		font-size: 13px;
+		color: #e8eaed;
+		font-weight: 500;
+	}
+
 	.toggle-label {
 		display: flex;
 		align-items: center;
@@ -1022,8 +1138,8 @@
 	}
 
 	.device-item {
-		background: #2d3339;
-		border: 1px solid #3a3f47;
+		background: rgba(45, 51, 57, var(--tile-opacity, 1));
+		border: 1px solid rgba(58, 63, 71, var(--tile-opacity, 1));
 		border-radius: 12px;
 		padding: 16px 20px;
 		display: flex;
@@ -1031,6 +1147,7 @@
 		align-items: center;
 		transition: all 0.2s;
 		cursor: pointer;
+		backdrop-filter: blur(10px);
 	}
 
 	.device-item:hover {
