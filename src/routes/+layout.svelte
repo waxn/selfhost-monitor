@@ -14,6 +14,11 @@
 
 <svelte:head>
 	<link rel="icon" href={favicon} />
+	<meta property="og:title" content="Selfhost Monitor" />
+	<meta property="og:description" content="Monitor your self-hosted services effortlessly." />
+	<meta property="og:image" content="https://i.postimg.cc/zv2RvrP0/image.png" />
+	<meta property="og:url" content="https://hlm.waxnflaxnai.com" />
+	<meta property="og:type" content="website" />
 </svelte:head>
 
 {@render children?.()}
