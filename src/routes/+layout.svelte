@@ -19,12 +19,19 @@
 {@render children?.()}
 
 <style>
+	:global(html) {
+		margin: 0;
+		padding: 0;
+		min-height: 100vh;
+	}
+
 	:global(body) {
 		margin: 0;
 		padding: 0;
 		font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
 		background: #0a0e12;
 		color: #e8eaed;
+		min-height: 100vh;
 	}
 
 	:global(*) {

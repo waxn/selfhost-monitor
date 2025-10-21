@@ -379,7 +379,10 @@
 	style:--tile-opacity={currentTileOpacity}
 >
 	{#if !startpageMode}
-		<header class:scrolled={isScrolled}>
+		<header
+			class:scrolled={isScrolled || !!currentBackgroundImage}
+			style:background={currentBackgroundImage ? `rgba(30, 35, 41, ${currentTileOpacity * 0.85})` : ''}
+		>
 			<div class="header-content">
 				<a href="/" class="logo-link">
 					<img src={favicon} alt="SelfHost Monitor" class="header-logo" />
@@ -811,6 +814,8 @@
 	.container {
 		min-height: 100vh;
 		padding: 0;
+		margin: 0;
+		width: 100%;
 	}
 
 	header {
