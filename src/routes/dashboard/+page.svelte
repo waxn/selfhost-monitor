@@ -62,6 +62,8 @@
 	const removeService = useMutation(api.services.remove);
 	const removeDevice = useMutation(api.devices.remove);
 	const updatePreferences = useMutation(api.users.updatePreferences);
+	const updateServiceLayout = useMutation(api.services.updateLayout);
+	const batchUpdateServiceLayout = useMutation(api.services.batchUpdateLayout);
 
 	const backgroundColors = [
 		{ name: 'Default Dark', value: '#0a0e12' },
@@ -340,11 +342,104 @@
 		selectedDeviceId = selectedDeviceId === deviceId ? null : deviceId;
 	}
 
-	// Filter services based on selected device
-	let filteredServices = $derived(() => {
+	// Drag and drop state
+	let draggedServiceId = $state<Id<'services'> | null>(null);
+	let dragOverServiceId = $state<Id<'services'> | null>(null);
+	let liveReorderedServices = $state<any[]>([]);
+
+	// Compute display order (live preview during drag or normal order)
+	let displayServices = $derived.by(() => {
+		if (draggedServiceId && liveReorderedServices.length > 0) {
+			return liveReorderedServices;
+		}
+		return filteredServices;
+	});
+
+	function handleDragStart(serviceId: Id<'services'>) {
+		return (e: DragEvent) => {
+			draggedServiceId = serviceId;
+			liveReorderedServices = [...filteredServices];
+			if (e.dataTransfer) {
+				e.dataTransfer.effectAllowed = 'move';
+				e.dataTransfer.setDragImage(new Image(), 0, 0); // Hide default ghost image
+			}
+		};
+	}
+
+	function handleDragOver(serviceId: Id<'services'>) {
+		return (e: DragEvent) => {
+			e.preventDefault();
+
+			if (!draggedServiceId || draggedServiceId === serviceId) {
+				return;
+			}
+
+			dragOverServiceId = serviceId;
+
+			// Live reorder for visual feedback
+			const currentServices = [...liveReorderedServices];
+			const draggedIndex = currentServices.findIndex(s => s._id === draggedServiceId);
+			const targetIndex = currentServices.findIndex(s => s._id === serviceId);
+
+			if (draggedIndex !== -1 && targetIndex !== -1 && draggedIndex !== targetIndex) {
+				const [draggedItem] = currentServices.splice(draggedIndex, 1);
+				currentServices.splice(targetIndex, 0, draggedItem);
+				liveReorderedServices = currentServices;
+			}
+		};
+	}
+
+	function handleDrop(serviceId: Id<'services'>) {
+		return async (e: DragEvent) => {
+			e.preventDefault();
+
+			if (!draggedServiceId || !currentUser) {
+				draggedServiceId = null;
+				dragOverServiceId = null;
+				liveReorderedServices = [];
+				return;
+			}
+
+			// Use the live reordered array for final save
+			const finalOrder = liveReorderedServices.length > 0 ? liveReorderedServices : filteredServices;
+
+			// Update layoutOrder for all services
+			const updates = finalOrder.map((service, index) => ({
+				id: service._id,
+				layoutOrder: index
+			}));
+
+			// Batch update
+			await batchUpdateServiceLayout({
+				userId: currentUser._id,
+				updates
+			});
+
+			draggedServiceId = null;
+			dragOverServiceId = null;
+			liveReorderedServices = [];
+		};
+	}
+
+	function handleDragEnd() {
+		draggedServiceId = null;
+		dragOverServiceId = null;
+		liveReorderedServices = [];
+	}
+
+	// Filter services based on selected device and sort by layoutOrder
+	let filteredServices = $derived.by(() => {
 		if (!services.data) return [];
-		if (!selectedDeviceId) return services.data;
-		return services.data.filter(service => service.deviceId === selectedDeviceId);
+		let filtered = !selectedDeviceId
+			? services.data
+			: services.data.filter(service => service.deviceId === selectedDeviceId);
+
+		// Sort by layoutOrder
+		return [...filtered].sort((a, b) => {
+			const orderA = a.layoutOrder ?? 999999;
+			const orderB = b.layoutOrder ?? 999999;
+			return orderA - orderB;
+		});
 	});
 
 	// Check if current user is demo user
@@ -637,7 +732,7 @@
 			<!-- Services in Startpage Mode -->
 			{#if services.data === undefined}
 				<div class="loading">Loading services...</div>
-			{:else if filteredServices().length === 0 && selectedDeviceId}
+			{:else if displayServices.length === 0 && selectedDeviceId}
 				<div class="empty-state-startpage">
 					<div class="empty-icon">📊</div>
 					<p>No services on this device</p>
@@ -658,12 +753,19 @@
 							</button>
 						{/if}
 					</h2>
-					<div class="startpage-grid">
-						{#each filteredServices() as service (service._id)}
+					<div class="startpage-grid" class:dragging={draggedServiceId !== null}>
+						{#each displayServices as service (service._id)}
 							<ServiceCard
 								{service}
 								onEdit={() => openEditService(service)}
 								onDelete={() => handleDeleteService(service._id)}
+								draggable={true}
+								onDragStart={handleDragStart(service._id)}
+								onDragOver={handleDragOver(service._id)}
+								onDrop={handleDrop(service._id)}
+								onDragEnd={handleDragEnd}
+								isDraggedOver={dragOverServiceId === service._id}
+								isBeingDragged={draggedServiceId === service._id}
 							/>
 						{/each}
 					</div>
@@ -771,7 +873,7 @@
 			<main>
 				{#if services.data === undefined}
 					<div class="loading">Loading services...</div>
-				{:else if filteredServices().length === 0 && selectedDeviceId}
+				{:else if displayServices.length === 0 && selectedDeviceId}
 					<div class="empty-state">
 						<div class="empty-icon">📊</div>
 						<h3>No services on this device</h3>
@@ -792,12 +894,19 @@
 							<button onclick={() => selectedDeviceId = null} class="clear-filter-btn-inline">Clear filter</button>
 						</div>
 					{/if}
-					<div class="services-grid">
-						{#each filteredServices() as service (service._id)}
+					<div class="services-grid" class:dragging={draggedServiceId !== null}>
+						{#each displayServices as service (service._id)}
 							<ServiceCard
 								{service}
 								onEdit={() => openEditService(service)}
 								onDelete={() => handleDeleteService(service._id)}
+								draggable={true}
+								onDragStart={handleDragStart(service._id)}
+								onDragOver={handleDragOver(service._id)}
+								onDrop={handleDrop(service._id)}
+								onDragEnd={handleDragEnd}
+								isDraggedOver={dragOverServiceId === service._id}
+								isBeingDragged={draggedServiceId === service._id}
 							/>
 						{/each}
 					</div>
@@ -1331,6 +1440,14 @@
 		gap: 24px;
 	}
 
+	.services-grid :global(.service-card) {
+		transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+	}
+
+	.services-grid.dragging :global(.service-card:not(:active)) {
+		transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+	}
+
 	/* Startpage Mode Styles */
 
 	.startpage-wrapper {
@@ -1455,6 +1572,14 @@
 		display: grid;
 		grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
 		gap: 24px;
+	}
+
+	.startpage-grid :global(.service-card) {
+		transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+	}
+
+	.startpage-grid.dragging :global(.service-card:not(:active)) {
+		transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 	}
 
 	.startpage-devices-grid {

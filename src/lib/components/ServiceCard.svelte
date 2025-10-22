@@ -17,12 +17,20 @@
 				responseTime: number | null;
 				excludeFromUptime?: boolean;
 			}>;
+			layoutOrder?: number;
 		};
 		onEdit: () => void;
 		onDelete: () => void;
+		draggable?: boolean;
+		onDragStart?: (e: DragEvent) => void;
+		onDragEnd?: (e: DragEvent) => void;
+		onDragOver?: (e: DragEvent) => void;
+		onDrop?: (e: DragEvent) => void;
+		isDraggedOver?: boolean;
+		isBeingDragged?: boolean;
 	}
 
-	let { service, onEdit, onDelete }: Props = $props();
+	let { service, onEdit, onDelete, draggable = false, onDragStart, onDragEnd, onDragOver, onDrop, isDraggedOver = false, isBeingDragged = false }: Props = $props();
 	let showMenu = $state(false);
 
 	function toggleMenu(e: MouseEvent) {
@@ -49,11 +57,60 @@
 	function closeMenu() {
 		showMenu = false;
 	}
+
+	function handleDragStart(e: DragEvent) {
+		if (onDragStart) {
+			e.dataTransfer!.effectAllowed = 'move';
+			onDragStart(e);
+		}
+	}
+
+	function handleDragOver(e: DragEvent) {
+		if (onDragOver) {
+			e.preventDefault();
+			onDragOver(e);
+		}
+	}
+
+	function handleDrop(e: DragEvent) {
+		if (onDrop) {
+			e.preventDefault();
+			onDrop(e);
+		}
+	}
+
+	function handleDragEnd(e: DragEvent) {
+		if (onDragEnd) {
+			onDragEnd(e);
+		}
+	}
 </script>
 
 <svelte:window on:click={closeMenu} />
 
-<div class="service-card">
+<div
+	class="service-card"
+	class:drag-over={isDraggedOver}
+	class:being-dragged={isBeingDragged}
+	draggable={draggable}
+	ondragstart={handleDragStart}
+	ondragover={handleDragOver}
+	ondrop={handleDrop}
+	ondragend={handleDragEnd}
+>
+	{#if draggable}
+		<div class="drag-handle" title="Drag to reorder">
+			<svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+				<circle cx="4" cy="4" r="1.5" fill="currentColor" />
+				<circle cx="12" cy="4" r="1.5" fill="currentColor" />
+				<circle cx="4" cy="8" r="1.5" fill="currentColor" />
+				<circle cx="12" cy="8" r="1.5" fill="currentColor" />
+				<circle cx="4" cy="12" r="1.5" fill="currentColor" />
+				<circle cx="12" cy="12" r="1.5" fill="currentColor" />
+			</svg>
+		</div>
+	{/if}
+
 	<button class="menu-btn" onclick={toggleMenu} aria-label="Menu">
 		<svg width="20" height="20" viewBox="0 0 20 20" fill="none">
 			<circle cx="10" cy="4" r="1.5" fill="currentColor" />
@@ -120,7 +177,7 @@
 		border-radius: 16px;
 		padding: 24px;
 		backdrop-filter: blur(10px);
-		transition: all 0.3s ease;
+		transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 		display: flex;
 		flex-direction: column;
 		gap: 12px;
@@ -130,6 +187,56 @@
 		border-color: #d35400;
 		transform: translateY(-2px);
 		box-shadow: 0 8px 24px rgba(211, 84, 0, 0.4);
+	}
+
+	.service-card.drag-over {
+		transform: scale(1.05);
+		border-color: #d35400;
+		box-shadow: 0 12px 32px rgba(211, 84, 0, 0.6);
+		background: linear-gradient(145deg, rgba(211, 84, 0, 0.1), rgba(197, 77, 0, 0.1));
+	}
+
+	.service-card[draggable="true"] {
+		cursor: default;
+	}
+
+	.service-card.being-dragged {
+		opacity: 0.4;
+		transform: scale(0.9) rotate(3deg);
+		box-shadow: 0 16px 48px rgba(211, 84, 0, 0.5);
+		z-index: 1000;
+	}
+
+	.drag-handle {
+		position: absolute;
+		top: 12px;
+		left: 12px;
+		color: rgba(108, 117, 125, 0.5);
+		cursor: grab;
+		padding: 6px;
+		border-radius: 6px;
+		transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		z-index: 5;
+		opacity: 0.6;
+	}
+
+	.service-card:hover .drag-handle {
+		opacity: 1;
+		color: #6c757d;
+	}
+
+	.drag-handle:hover {
+		color: #d35400;
+		background: rgba(211, 84, 0, 0.15);
+		transform: scale(1.1);
+	}
+
+	.drag-handle:active {
+		cursor: grabbing;
+		transform: scale(0.95);
 	}
 
 	.menu-btn {

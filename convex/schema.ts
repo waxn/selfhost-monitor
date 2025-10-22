@@ -6,6 +6,12 @@ export default defineSchema({
     name: v.string(),
     description: v.optional(v.string()),
     userId: v.optional(v.id("users")),
+    // Layout properties
+    layoutX: v.optional(v.number()),
+    layoutY: v.optional(v.number()),
+    layoutWidth: v.optional(v.number()),
+    layoutHeight: v.optional(v.number()),
+    layoutOrder: v.optional(v.number()),
   }).index("by_user", ["userId"]),
 
   services: defineTable({
@@ -14,6 +20,12 @@ export default defineSchema({
     deviceId: v.optional(v.id("devices")),
     iconUrl: v.optional(v.string()),
     userId: v.optional(v.id("users")),
+    // Layout properties
+    layoutX: v.optional(v.number()),
+    layoutY: v.optional(v.number()),
+    layoutWidth: v.optional(v.number()),
+    layoutHeight: v.optional(v.number()),
+    layoutOrder: v.optional(v.number()),
   }).index("by_user", ["userId"]),
 
   serviceUrls: defineTable({

@@ -140,3 +140,49 @@ export const remove = mutation({
     await ctx.db.delete(args.id);
   },
 });
+
+export const updateLayout = mutation({
+  args: {
+    id: v.id("services"),
+    userId: v.id("users"),
+    layoutX: v.optional(v.number()),
+    layoutY: v.optional(v.number()),
+    layoutWidth: v.optional(v.number()),
+    layoutHeight: v.optional(v.number()),
+    layoutOrder: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const { id, userId, ...layout } = args;
+    // Check ownership
+    const service = await ctx.db.get(id);
+    if (!service || (service.userId && service.userId !== userId)) {
+      throw new Error("Unauthorized");
+    }
+    await ctx.db.patch(id, layout);
+  },
+});
+
+export const batchUpdateLayout = mutation({
+  args: {
+    userId: v.id("users"),
+    updates: v.array(v.object({
+      id: v.id("services"),
+      layoutX: v.optional(v.number()),
+      layoutY: v.optional(v.number()),
+      layoutWidth: v.optional(v.number()),
+      layoutHeight: v.optional(v.number()),
+      layoutOrder: v.optional(v.number()),
+    })),
+  },
+  handler: async (ctx, args) => {
+    for (const update of args.updates) {
+      const { id, ...layout } = update;
+      // Check ownership
+      const service = await ctx.db.get(id);
+      if (!service || (service.userId && service.userId !== args.userId)) {
+        continue; // Skip unauthorized items
+      }
+      await ctx.db.patch(id, layout);
+    }
+  },
+});
