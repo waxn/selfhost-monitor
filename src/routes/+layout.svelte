@@ -19,6 +19,11 @@
 	<meta property="og:image" content="https://i.postimg.cc/zv2RvrP0/image.png" />
 	<meta property="og:url" content="https://hlm.waxnflaxnai.com" />
 	<meta property="og:type" content="website" />
+	<script
+	    src="https://app.rybbit.io/api/script.js"
+	    data-site-id="6f908b2c2f18"
+	    defer
+	></script>
 </svelte:head>
 
 {@render children?.()}
