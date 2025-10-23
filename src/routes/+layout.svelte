@@ -20,8 +20,8 @@
 	<meta property="og:url" content="https://hlm.waxnflaxnai.com" />
 	<meta property="og:type" content="website" />
 	<script
-	    src="https://app.rybbit.io/api/script.js"
-	    data-site-id="6f908b2c2f18"
+	    src="https://tracking.waxnflaxnai.com/api/script.js"
+	    data-site-id="22526d236d93"
 	    defer
 	></script>
 </svelte:head>
