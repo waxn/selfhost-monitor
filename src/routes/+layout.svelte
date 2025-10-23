@@ -3,17 +3,12 @@
 	import { initConvex } from '$lib/convex.svelte';
 	import { injectAnalytics } from '@vercel/analytics/sveltekit';
 	import favicon from '$lib/assets/favicon.ico';
-	import { beforeNavigate, afterNavigate } from '$app/navigation';
-	import posthog from 'posthog-js';
 
 	let { children } = $props();
 
 	if (browser) {
 		initConvex(import.meta.env.VITE_CONVEX_URL);
 		injectAnalytics();
-
-		beforeNavigate(() => posthog.capture('$pageleave'));
-		afterNavigate(() => posthog.capture('$pageview'));
 	}
 </script>
 
