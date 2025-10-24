@@ -13,7 +13,7 @@
 	let { isOpen = $bindable(false), onClose, serviceUrlId, urlLabel }: Props = $props();
 
 	let currentUser = $state<any>(null);
-	let timeRange = $state<'24h' | '7d' | '30d'>('24h');
+	let timeRange = $state<'24h' | '7d' | '30d' | 'all'>('24h');
 
 	$effect(() => {
 		getCurrentUser().then(user => {
@@ -208,6 +208,13 @@
 					onclick={() => timeRange = '30d'}
 				>
 					30 Days
+				</button>
+				<button
+					class="range-btn"
+					class:active={timeRange === 'all'}
+					onclick={() => timeRange = 'all'}
+				>
+					All Time
 				</button>
 			</div>
 
