@@ -386,7 +386,37 @@
 		max-width: 800px;
 		max-height: 90vh;
 		overflow-y: auto;
+		overflow-x: hidden;
 		box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+		scrollbar-width: thin;
+		scrollbar-color: #3a3f47 transparent;
+	}
+
+	/* Custom Scrollbar Styling */
+	.modal::-webkit-scrollbar {
+		width: 10px;
+	}
+
+	.modal::-webkit-scrollbar-track {
+		background: transparent;
+		margin: 16px 0;
+	}
+
+	.modal::-webkit-scrollbar-thumb {
+		background: #3a3f47;
+		border-radius: 10px;
+		border: 3px solid transparent;
+		background-clip: padding-box;
+		transition: background 0.2s;
+	}
+
+	.modal::-webkit-scrollbar-thumb:hover {
+		background: #d35400;
+		background-clip: padding-box;
+	}
+
+	.modal::-webkit-scrollbar-corner {
+		background: transparent;
 	}
 
 	.modal-header {
