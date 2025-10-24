@@ -6,6 +6,7 @@
 	import ServiceModal from '$lib/components/ServiceModal.svelte';
 	import DeviceModal from '$lib/components/DeviceModal.svelte';
 	import DemoBanner from '$lib/components/DemoBanner.svelte';
+	import UptimeDetailsModal from '$lib/components/UptimeDetailsModal.svelte';
 	import type { Id } from '../../../convex/_generated/dataModel';
 	import favicon from '$lib/assets/favicon.ico';
 
@@ -95,8 +96,11 @@
 
 	let showServiceModal = $state(false);
 	let showDeviceModal = $state(false);
+	let showUptimeDetails = $state(false);
 	let editingService = $state<any>(null);
 	let editingDevice = $state<any>(null);
+	let selectedUrlId = $state<Id<'serviceUrls'> | null>(null);
+	let selectedUrlLabel = $state('');
 	let isScrolled = $state(false);
 
 	function openAddService() {
@@ -335,6 +339,18 @@
 	function closeDeviceModal() {
 		showDeviceModal = false;
 		editingDevice = null;
+	}
+
+	function handleShowDetails(urlId: Id<'serviceUrls'>, label: string) {
+		selectedUrlId = urlId;
+		selectedUrlLabel = label;
+		showUptimeDetails = true;
+	}
+
+	function closeUptimeDetails() {
+		showUptimeDetails = false;
+		selectedUrlId = null;
+		selectedUrlLabel = '';
 	}
 
 	function toggleDeviceFilter(deviceId: Id<'devices'>) {
@@ -759,6 +775,7 @@
 								{service}
 								onEdit={() => openEditService(service)}
 								onDelete={() => handleDeleteService(service._id)}
+								onShowDetails={handleShowDetails}
 								draggable={true}
 								onDragStart={handleDragStart(service._id)}
 								onDragOver={handleDragOver(service._id)}
@@ -900,6 +917,7 @@
 								{service}
 								onEdit={() => openEditService(service)}
 								onDelete={() => handleDeleteService(service._id)}
+								onShowDetails={handleShowDetails}
 								draggable={true}
 								onDragStart={handleDragStart(service._id)}
 								onDragOver={handleDragOver(service._id)}
@@ -918,6 +936,7 @@
 
 <ServiceModal isOpen={showServiceModal} onClose={closeServiceModal} {editingService} />
 <DeviceModal isOpen={showDeviceModal} onClose={closeDeviceModal} {editingDevice} />
+<UptimeDetailsModal isOpen={showUptimeDetails} onClose={closeUptimeDetails} serviceUrlId={selectedUrlId} urlLabel={selectedUrlLabel} />
 
 <style>
 	.container {

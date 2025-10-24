@@ -144,3 +144,43 @@ export const getRecentChecks = query({
       .take(limit);
   },
 });
+
+export const getHistoricalChecks = query({
+  args: {
+    serviceUrlId: v.id("serviceUrls"),
+    userId: v.id("users"),
+    timeRange: v.union(v.literal("24h"), v.literal("7d"), v.literal("30d")),
+  },
+  handler: async (ctx, args) => {
+    // Check ownership of the URL
+    const url = await ctx.db.get(args.serviceUrlId);
+    if (!url || url.userId !== args.userId) {
+      throw new Error("Unauthorized");
+    }
+
+    // Calculate timestamp cutoff based on time range
+    const now = Date.now();
+    let cutoffTime: number;
+    switch (args.timeRange) {
+      case "24h":
+        cutoffTime = now - 24 * 60 * 60 * 1000;
+        break;
+      case "7d":
+        cutoffTime = now - 7 * 24 * 60 * 60 * 1000;
+        break;
+      case "30d":
+        cutoffTime = now - 30 * 24 * 60 * 60 * 1000;
+        break;
+    }
+
+    // Get all checks within the time range
+    const allChecks = await ctx.db
+      .query("uptimeChecks")
+      .withIndex("by_url", (q) => q.eq("serviceUrlId", args.serviceUrlId))
+      .order("desc")
+      .collect();
+
+    // Filter by timestamp and return
+    return allChecks.filter((check) => check.timestamp >= cutoffTime);
+  },
+});

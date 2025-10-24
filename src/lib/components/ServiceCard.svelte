@@ -21,6 +21,7 @@
 		};
 		onEdit: () => void;
 		onDelete: () => void;
+		onShowDetails?: (urlId: Id<'serviceUrls'>, label: string) => void;
 		draggable?: boolean;
 		onDragStart?: (e: DragEvent) => void;
 		onDragEnd?: (e: DragEvent) => void;
@@ -30,7 +31,7 @@
 		isBeingDragged?: boolean;
 	}
 
-	let { service, onEdit, onDelete, draggable = false, onDragStart, onDragEnd, onDragOver, onDrop, isDraggedOver = false, isBeingDragged = false }: Props = $props();
+	let { service, onEdit, onDelete, onShowDetails, draggable = false, onDragStart, onDragEnd, onDragOver, onDrop, isDraggedOver = false, isBeingDragged = false }: Props = $props();
 	let showMenu = $state(false);
 
 	function toggleMenu(e: MouseEvent) {
@@ -50,8 +51,22 @@
 		onDelete();
 	}
 
-	function handleUrlClick(url: string) {
-		window.open(url, '_blank');
+	function handleUrlClick(e: MouseEvent, url: string) {
+		// If it's a right-click or ctrl/cmd+click, open in new tab
+		if (e.button === 2 || e.ctrlKey || e.metaKey) {
+			window.open(url, '_blank');
+		} else {
+			// Default behavior: open in same tab
+			window.open(url, '_blank');
+		}
+	}
+
+	function handleShowDetails(e: MouseEvent, urlId: Id<'serviceUrls'>, label: string) {
+		e.preventDefault();
+		e.stopPropagation();
+		if (onShowDetails) {
+			onShowDetails(urlId, label);
+		}
 	}
 
 	function closeMenu() {
@@ -151,19 +166,33 @@
 	{#if service.urls && service.urls.length > 0}
 		<div class="url-buttons">
 			{#each service.urls as urlData}
-				<button
-					class="url-btn"
-					class:up={urlData.isUp === true && !urlData.excludeFromUptime}
-					class:down={urlData.isUp === false && !urlData.excludeFromUptime}
-					class:excluded={urlData.excludeFromUptime}
-					onclick={() => handleUrlClick(urlData.url)}
-				>
-					<span class="status-dot"></span>
-					{urlData.label}
-					{#if urlData.responseTime && !urlData.excludeFromUptime}
-						<span class="response-time">{urlData.responseTime}ms</span>
+				<div class="url-btn-container">
+					<button
+						class="url-btn"
+						class:up={urlData.isUp === true && !urlData.excludeFromUptime}
+						class:down={urlData.isUp === false && !urlData.excludeFromUptime}
+						class:excluded={urlData.excludeFromUptime}
+						onclick={(e) => handleUrlClick(e, urlData.url)}
+					>
+						<span class="status-dot"></span>
+						{urlData.label}
+						{#if urlData.responseTime && !urlData.excludeFromUptime}
+							<span class="response-time">{urlData.responseTime}ms</span>
+						{/if}
+					</button>
+					{#if !urlData.excludeFromUptime}
+						<button
+							class="details-btn"
+							onclick={(e) => handleShowDetails(e, urlData._id, urlData.label)}
+							title="View uptime details"
+						>
+							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+								<path d="M3 3v18h18" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+								<path d="M18 17l-5-5-4 4-4-4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+							</svg>
+						</button>
 					{/if}
-				</button>
+				</div>
 			{/each}
 		</div>
 	{/if}
@@ -368,6 +397,12 @@
 		margin-top: 8px;
 	}
 
+	.url-btn-container {
+		display: flex;
+		gap: 6px;
+		align-items: center;
+	}
+
 	.url-btn {
 		background: #2d3339;
 		border: 1px solid #3a3f47;
@@ -381,6 +416,7 @@
 		align-items: center;
 		gap: 8px;
 		position: relative;
+		flex: 1;
 	}
 
 	.url-btn:hover {
@@ -416,5 +452,27 @@
 		margin-left: auto;
 		font-size: 12px;
 		color: #6c757d;
+	}
+
+	.details-btn {
+		background: transparent;
+		border: 1px solid #3a3f47;
+		color: #6c757d;
+		width: 36px;
+		height: 36px;
+		border-radius: 8px;
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		transition: all 0.2s;
+		flex-shrink: 0;
+	}
+
+	.details-btn:hover {
+		background: #2d3339;
+		border-color: #d35400;
+		color: #e8eaed;
+		box-shadow: 0 0 12px rgba(211, 84, 0, 0.3);
 	}
 </style>
