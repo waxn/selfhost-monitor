@@ -137,6 +137,42 @@
 		});
 	});
 
+	// Generate X-axis labels
+	let xAxisLabels = $derived.by(() => {
+		if (!uptimeData.data || uptimeData.data.length === 0) return [];
+
+		const checks = [...uptimeData.data].reverse(); // Oldest to newest
+		const checksWithTime = checks.filter(c => c.responseTime != null);
+
+		if (checksWithTime.length === 0) return [];
+
+		const width = graphWidth - padding.left - padding.right;
+		const steps = Math.min(5, checksWithTime.length); // Show up to 6 labels (0 to 5)
+
+		return Array.from({ length: steps + 1 }, (_, i) => {
+			const index = Math.floor(i * (checksWithTime.length - 1) / steps);
+			const check = checksWithTime[index];
+			const x = padding.left + (index / (checksWithTime.length - 1 || 1)) * width;
+
+			// Format timestamp based on time range
+			let label = '';
+			const date = new Date(check.timestamp);
+
+			if (timeRange === '24h') {
+				// Show time only for 24h view
+				label = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+			} else if (timeRange === '7d') {
+				// Show day and time for 7d view
+				label = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit' });
+			} else {
+				// Show month and day for 30d and all time
+				label = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+			}
+
+			return { x, label };
+		});
+	});
+
 	// Generate status indicator bars
 	let statusBars = $derived.by(() => {
 		if (!uptimeData.data || uptimeData.data.length === 0) return [];
@@ -345,16 +381,18 @@
 								</circle>
 							{/each}
 
-							<!-- X-axis label -->
-							<text
-								x={graphWidth / 2}
-								y={graphHeight - 10}
-								text-anchor="middle"
-								fill="#a0a4a8"
-								font-size="12"
-							>
-								Time
-							</text>
+							<!-- X-axis labels -->
+							{#each xAxisLabels as label}
+								<text
+									x={label.x}
+									y={graphHeight - 10}
+									text-anchor="middle"
+									fill="#a0a4a8"
+									font-size="11"
+								>
+									{label.label}
+								</text>
+							{/each}
 						</svg>
 					</div>
 
