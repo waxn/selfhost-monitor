@@ -142,15 +142,26 @@
 		if (!uptimeData.data || uptimeData.data.length === 0) return [];
 
 		const checks = [...uptimeData.data].reverse();
-		const width = graphWidth - padding.left - padding.right;
-		const barWidth = width / checks.length;
 
-		return checks.map((check, i) => ({
-			x: padding.left + i * barWidth,
-			width: barWidth,
-			isUp: check.isUp,
-			timestamp: check.timestamp,
-		}));
+		// Group checks to show max 90 bars to avoid cramping
+		const maxBars = 90;
+		const groupSize = Math.ceil(checks.length / maxBars);
+
+		const groupedBars = [];
+		for (let i = 0; i < checks.length; i += groupSize) {
+			const group = checks.slice(i, i + groupSize);
+			// A group is "up" if more than half of its checks are up
+			const upCount = group.filter(c => c.isUp).length;
+			const isUp = upCount > group.length / 2;
+			const timestamp = group[group.length - 1].timestamp; // Use latest timestamp in group
+
+			groupedBars.push({
+				isUp,
+				timestamp,
+			});
+		}
+
+		return groupedBars;
 	});
 
 	function formatDate(timestamp: number) {
@@ -252,20 +263,31 @@
 					<!-- Status Timeline -->
 					<div class="graph-section">
 						<h3>Status Timeline</h3>
-						<svg class="status-timeline" width={graphWidth} height="40" viewBox="0 0 {graphWidth} 40">
-							{#each statusBars as bar}
+						<div class="status-timeline-wrapper">
+							<svg class="status-timeline" width="100%" height="28" viewBox="0 0 {statusBars.length * 14} 28" preserveAspectRatio="none">
 								<rect
-									x={bar.x}
-									y="10"
-									width={bar.width}
-									height="20"
-									fill={bar.isUp ? '#229954' : '#c0392b'}
-									opacity="0.8"
-								>
-									<title>{bar.isUp ? 'Up' : 'Down'} - {formatDate(bar.timestamp)}</title>
-								</rect>
-							{/each}
-						</svg>
+									x="0"
+									y="0"
+									width={statusBars.length * 14}
+									height="28"
+									rx="14"
+									fill="#0a0e12"
+								/>
+								{#each statusBars as bar, i}
+									<rect
+										x={i * 14 + 2}
+										y="4"
+										width="10"
+										height="20"
+										rx="3"
+										ry="3"
+										fill={bar.isUp ? '#229954' : '#c0392b'}
+									>
+										<title>{bar.isUp ? 'Up' : 'Down'} - {formatDate(bar.timestamp)}</title>
+									</rect>
+								{/each}
+							</svg>
+						</div>
 					</div>
 
 					<!-- Response Time Graph -->
@@ -576,12 +598,19 @@
 		color: #e8eaed;
 	}
 
-	.status-timeline {
+	.status-timeline-wrapper {
 		width: 100%;
 		max-width: 100%;
+		padding: 8px;
+		background: #0a0e12;
 		border: 1px solid #3a3f47;
 		border-radius: 8px;
-		background: #0a0e12;
+	}
+
+	.status-timeline {
+		display: block;
+		width: 100%;
+		height: 28px;
 	}
 
 	.response-graph {
