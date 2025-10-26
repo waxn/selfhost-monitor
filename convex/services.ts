@@ -2,69 +2,104 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { encrypt, decrypt } from "./encryption";
 
-// Get encryption key - must be set in Convex dashboard as ENCRYPTION_KEY
-// For now, we'll pass undefined and handle gracefully (store unencrypted)
-const getEncryptionKey = () => undefined as string | undefined;
+// Get encryption key from environment variables
+const getEncryptionKey = () => process.env.ENCRYPTION_KEY;
 
 export const list = query({
   args: { userId: v.optional(v.id("users")) },
   handler: async (ctx, args) => {
-    if (!args.userId) return [];
-    const services = await ctx.db.query("services").withIndex("by_user", (q: any) => q.eq("userId", args.userId)).collect();
+    try {
+      if (!args.userId) return [];
+      const services = await ctx.db.query("services").withIndex("by_user", (q: any) => q.eq("userId", args.userId)).collect();
 
-    // Populate device and urls for each service
-    return await Promise.all(services.map(async (service) => {
-      const device = service.deviceId ? await ctx.db.get(service.deviceId) : null;
-      const urls = await ctx.db
-        .query("serviceUrls")
-        .withIndex("by_service", (q: any) => q.eq("serviceId", service._id))
-        .collect();
+      // Populate device and urls for each service
+      return await Promise.all(services.map(async (service) => {
+        try {
+          const device = service.deviceId ? await ctx.db.get(service.deviceId) : null;
+          const urls = await ctx.db
+            .query("serviceUrls")
+            .withIndex("by_service", (q: any) => q.eq("serviceId", service._id))
+            .collect();
 
-      // Get latest uptime check for each URL
-      const urlsWithStatus = await Promise.all(urls.map(async (url) => {
-        // Decrypt URL
-        const decryptedUrl = (await decrypt(url.url, getEncryptionKey())) || url.url;
+          // Get latest uptime check for each URL
+          const urlsWithStatus = await Promise.all(urls.map(async (url) => {
+            try {
+              // Decrypt URL
+              const decryptedUrl = (await decrypt(url.url, getEncryptionKey())) || url.url;
 
-        // If excluded from uptime, return null for all status fields
-        if (url.excludeFromUptime) {
+              // If excluded from uptime, return null for all status fields
+              if (url.excludeFromUptime) {
+                return {
+                  _id: url._id,
+                  label: url.label,
+                  url: decryptedUrl,
+                  isUp: null,
+                  lastCheck: null,
+                  responseTime: null,
+                  excludeFromUptime: true,
+                };
+              }
+
+              const latestCheck = await ctx.db
+                .query("uptimeChecks")
+                .withIndex("by_url", (q: any) => q.eq("serviceUrlId", url._id))
+                .order("desc")
+                .first();
+
+              return {
+                _id: url._id,
+                label: url.label,
+                url: decryptedUrl,
+                isUp: latestCheck?.isUp ?? null,
+                lastCheck: latestCheck?.timestamp ?? null,
+                responseTime: latestCheck?.responseTime ?? null,
+                excludeFromUptime: false,
+              };
+            } catch (urlError) {
+              console.error(`Error processing URL ${url._id}:`, urlError);
+              // Return URL with error state
+              return {
+                _id: url._id,
+                label: url.label,
+                url: url.url,
+                isUp: null,
+                lastCheck: null,
+                responseTime: null,
+                excludeFromUptime: false,
+              };
+            }
+          }));
+
+          // Decrypt notes
+          let decryptedNotes = null;
+          try {
+            decryptedNotes = service.notes ? await decrypt(service.notes, getEncryptionKey()) : null;
+          } catch (notesError) {
+            console.error(`Error decrypting notes for service ${service._id}:`, notesError);
+            // Leave notes as null on error
+          }
+
           return {
-            _id: url._id,
-            label: url.label,
-            url: decryptedUrl,
-            isUp: null,
-            lastCheck: null,
-            responseTime: null,
-            excludeFromUptime: true,
+            ...service,
+            notes: decryptedNotes,
+            device: device ? { name: device.name } : null,
+            urls: urlsWithStatus,
+          };
+        } catch (serviceError) {
+          console.error(`Error processing service ${service._id}:`, serviceError);
+          // Return service with minimal data
+          return {
+            ...service,
+            notes: null,
+            device: null,
+            urls: [],
           };
         }
-
-        const latestCheck = await ctx.db
-          .query("uptimeChecks")
-          .withIndex("by_url", (q: any) => q.eq("serviceUrlId", url._id))
-          .order("desc")
-          .first();
-
-        return {
-          _id: url._id,
-          label: url.label,
-          url: decryptedUrl,
-          isUp: latestCheck?.isUp ?? null,
-          lastCheck: latestCheck?.timestamp ?? null,
-          responseTime: latestCheck?.responseTime ?? null,
-          excludeFromUptime: false,
-        };
       }));
-
-      // Decrypt notes
-      const decryptedNotes = service.notes ? await decrypt(service.notes, getEncryptionKey()) : null;
-
-      return {
-        ...service,
-        notes: decryptedNotes,
-        device: device ? { name: device.name } : null,
-        urls: urlsWithStatus,
-      };
-    }));
+    } catch (error) {
+      console.error("Error in services.list:", error);
+      return [];
+    }
   },
 });
 

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { useQuery, useMutation, getCurrentUser, logout } from '$lib/convex.svelte';
+	import { useQuery, useMutation, useAction, getCurrentUser, logout } from '$lib/convex.svelte';
 	import { api } from '../../../convex/_generated/api';
 	import ServiceCard from '$lib/components/ServiceCard.svelte';
 	import ServiceModal from '$lib/components/ServiceModal.svelte';
@@ -65,6 +65,7 @@
 	const updatePreferences = useMutation(api.users.updatePreferences);
 	const updateServiceLayout = useMutation(api.services.updateLayout);
 	const batchUpdateServiceLayout = useMutation(api.services.batchUpdateLayout);
+	const testEmailAction = useAction(api.testEmail.testEmailAlert);
 
 	const backgroundColors = [
 		{ name: 'Default Dark', value: '#0a0e12' },
@@ -93,6 +94,15 @@
 		console.log('[currentTileOpacity] Derived value:', opacity);
 		return opacity;
 	});
+	let notificationEmail = $derived.by(() => {
+		return userPreferences.data?.notificationEmail || '';
+	});
+	let emailNotificationsEnabled = $derived.by(() => {
+		return userPreferences.data?.emailNotificationsEnabled ?? false;
+	});
+
+	let testEmailStatus = $state<'idle' | 'sending' | 'success' | 'error'>('idle');
+	let testEmailMessage = $state('');
 
 	let showServiceModal = $state(false);
 	let showDeviceModal = $state(false);
@@ -329,6 +339,69 @@
 
 	function closeSettings() {
 		showSettings = false;
+	}
+
+	async function updateNotificationEmail(email: string) {
+		if (!currentUser) return;
+		try {
+			await updatePreferences({
+				userId: currentUser._id,
+				notificationEmail: email
+			});
+		} catch (error) {
+			console.error('[updateNotificationEmail] Error:', error);
+		}
+	}
+
+	async function toggleEmailNotifications() {
+		if (!currentUser) return;
+		try {
+			await updatePreferences({
+				userId: currentUser._id,
+				emailNotificationsEnabled: !emailNotificationsEnabled
+			});
+		} catch (error) {
+			console.error('[toggleEmailNotifications] Error:', error);
+		}
+	}
+
+	async function sendTestEmail() {
+		if (!notificationEmail) {
+			testEmailStatus = 'error';
+			testEmailMessage = 'Please enter an email address first';
+			setTimeout(() => {
+				testEmailStatus = 'idle';
+				testEmailMessage = '';
+			}, 3000);
+			return;
+		}
+
+		testEmailStatus = 'sending';
+		testEmailMessage = '';
+
+		try {
+			const result = await testEmailAction({
+				recipientEmail: notificationEmail,
+				testType: 'down'
+			});
+
+			if (result.success) {
+				testEmailStatus = 'success';
+				testEmailMessage = 'Test email sent! Check your inbox (and spam folder).';
+			} else {
+				testEmailStatus = 'error';
+				testEmailMessage = `Failed: ${result.error || 'Unknown error'}`;
+			}
+		} catch (error) {
+			testEmailStatus = 'error';
+			testEmailMessage = `Error: ${error instanceof Error ? error.message : String(error)}`;
+			console.error('[sendTestEmail] Error:', error);
+		}
+
+		setTimeout(() => {
+			testEmailStatus = 'idle';
+			testEmailMessage = '';
+		}, 5000);
 	}
 
 	function closeServiceModal() {
@@ -590,6 +663,55 @@
 												<div class="opacity-value">{Math.round(currentTileOpacity * 100)}%</div>
 											</div>
 										</div>
+
+										<div class="settings-divider"></div>
+
+										<div class="settings-option">
+											<div class="settings-label">Email Notifications</div>
+											<label class="toggle-label">
+												<span>Enable Alerts</span>
+												<input
+													type="checkbox"
+													checked={emailNotificationsEnabled}
+													onchange={toggleEmailNotifications}
+													class="toggle-checkbox"
+												/>
+												<span class="toggle-switch"></span>
+											</label>
+											<div class="email-input-container">
+												<input
+													type="email"
+													placeholder="your@email.com"
+													value={notificationEmail}
+													oninput={(e) => updateNotificationEmail((e.target as HTMLInputElement).value)}
+													class="email-input"
+												/>
+												<div class="email-hint">Receive down alerts for your monitored services</div>
+												<button
+													onclick={sendTestEmail}
+													disabled={testEmailStatus === 'sending' || !notificationEmail}
+													class="test-email-btn"
+													class:sending={testEmailStatus === 'sending'}
+													class:success={testEmailStatus === 'success'}
+													class:error={testEmailStatus === 'error'}
+												>
+													{#if testEmailStatus === 'sending'}
+														Sending...
+													{:else if testEmailStatus === 'success'}
+														✓ Sent!
+													{:else if testEmailStatus === 'error'}
+														✗ Failed
+													{:else}
+														Send Test Email
+													{/if}
+												</button>
+												{#if testEmailMessage}
+													<div class="test-email-message" class:success={testEmailStatus === 'success'} class:error={testEmailStatus === 'error'}>
+														{testEmailMessage}
+													</div>
+												{/if}
+											</div>
+										</div>
 									</div>
 								{/if}
 							</div>
@@ -705,6 +827,55 @@
 												class="opacity-slider"
 											/>
 											<div class="opacity-value">{Math.round(currentTileOpacity * 100)}%</div>
+										</div>
+									</div>
+
+									<div class="settings-divider"></div>
+
+									<div class="settings-option">
+										<div class="settings-label">Email Notifications</div>
+										<label class="toggle-label">
+											<span>Enable Alerts</span>
+											<input
+												type="checkbox"
+												checked={emailNotificationsEnabled}
+												onchange={toggleEmailNotifications}
+												class="toggle-checkbox"
+											/>
+											<span class="toggle-switch"></span>
+										</label>
+										<div class="email-input-container">
+											<input
+												type="email"
+												placeholder="your@email.com"
+												value={notificationEmail}
+												oninput={(e) => updateNotificationEmail((e.target as HTMLInputElement).value)}
+												class="email-input"
+											/>
+											<div class="email-hint">Receive down alerts for your monitored services</div>
+											<button
+												onclick={sendTestEmail}
+												disabled={testEmailStatus === 'sending' || !notificationEmail}
+												class="test-email-btn"
+												class:sending={testEmailStatus === 'sending'}
+												class:success={testEmailStatus === 'success'}
+												class:error={testEmailStatus === 'error'}
+											>
+												{#if testEmailStatus === 'sending'}
+													Sending...
+												{:else if testEmailStatus === 'success'}
+													✓ Sent!
+												{:else if testEmailStatus === 'error'}
+													✗ Failed
+												{:else}
+													Send Test Email
+												{/if}
+											</button>
+											{#if testEmailMessage}
+												<div class="test-email-message" class:success={testEmailStatus === 'success'} class:error={testEmailStatus === 'error'}>
+													{testEmailMessage}
+												</div>
+											{/if}
 										</div>
 									</div>
 
@@ -1223,6 +1394,100 @@
 		font-size: 13px;
 		color: #e8eaed;
 		font-weight: 500;
+	}
+
+	.email-input-container {
+		margin-top: 12px;
+	}
+
+	.email-input {
+		width: 100%;
+		padding: 10px 12px;
+		background: #0a0e12;
+		border: 1px solid #3a3f47;
+		border-radius: 6px;
+		color: #e8eaed;
+		font-size: 14px;
+		transition: all 0.2s;
+		box-sizing: border-box;
+	}
+
+	.email-input:focus {
+		outline: none;
+		border-color: #d35400;
+		box-shadow: 0 0 0 3px rgba(211, 84, 0, 0.1);
+	}
+
+	.email-input::placeholder {
+		color: #6c757d;
+	}
+
+	.email-hint {
+		margin-top: 6px;
+		font-size: 12px;
+		color: #6c757d;
+		line-height: 1.4;
+	}
+
+	.test-email-btn {
+		margin-top: 12px;
+		width: 100%;
+		padding: 10px 16px;
+		background: linear-gradient(135deg, #d35400 0%, #c54d00 100%);
+		border: none;
+		border-radius: 6px;
+		color: white;
+		font-size: 14px;
+		font-weight: 500;
+		cursor: pointer;
+		transition: all 0.2s;
+		box-shadow: 0 2px 8px rgba(211, 84, 0, 0.3);
+	}
+
+	.test-email-btn:hover:not(:disabled) {
+		transform: translateY(-1px);
+		box-shadow: 0 4px 12px rgba(211, 84, 0, 0.4);
+	}
+
+	.test-email-btn:active:not(:disabled) {
+		transform: translateY(0);
+	}
+
+	.test-email-btn:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+	}
+
+	.test-email-btn.sending {
+		background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+	}
+
+	.test-email-btn.success {
+		background: linear-gradient(135deg, #229954 0%, #1e8449 100%);
+	}
+
+	.test-email-btn.error {
+		background: linear-gradient(135deg, #c0392b 0%, #a93226 100%);
+	}
+
+	.test-email-message {
+		margin-top: 8px;
+		padding: 8px 12px;
+		border-radius: 6px;
+		font-size: 13px;
+		line-height: 1.4;
+	}
+
+	.test-email-message.success {
+		background: rgba(34, 153, 84, 0.1);
+		border: 1px solid rgba(34, 153, 84, 0.3);
+		color: #229954;
+	}
+
+	.test-email-message.error {
+		background: rgba(192, 57, 43, 0.1);
+		border: 1px solid rgba(192, 57, 43, 0.3);
+		color: #c0392b;
 	}
 
 	.toggle-label {

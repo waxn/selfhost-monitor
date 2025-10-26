@@ -7,9 +7,11 @@ export const updatePreferences = mutation({
     backgroundColor: v.optional(v.string()),
     backgroundImage: v.optional(v.union(v.string(), v.null())),
     tileOpacity: v.optional(v.number()),
+    notificationEmail: v.optional(v.string()),
+    emailNotificationsEnabled: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    const { userId, backgroundColor, backgroundImage, tileOpacity } = args;
+    const { userId, backgroundColor, backgroundImage, tileOpacity, notificationEmail, emailNotificationsEnabled } = args;
 
     // Verify user exists
     const user = await ctx.db.get(userId);
@@ -33,6 +35,14 @@ export const updatePreferences = mutation({
       patchData.tileOpacity = tileOpacity;
     }
 
+    if (notificationEmail !== undefined) {
+      patchData.notificationEmail = notificationEmail;
+    }
+
+    if (emailNotificationsEnabled !== undefined) {
+      patchData.emailNotificationsEnabled = emailNotificationsEnabled;
+    }
+
     await ctx.db.patch(userId, patchData);
   },
 });
@@ -47,6 +57,8 @@ export const getPreferences = query({
       backgroundColor: user.backgroundColor,
       backgroundImage: user.backgroundImage,
       tileOpacity: user.tileOpacity,
+      notificationEmail: user.notificationEmail,
+      emailNotificationsEnabled: user.emailNotificationsEnabled,
     };
   },
 });

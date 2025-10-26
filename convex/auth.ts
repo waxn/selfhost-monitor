@@ -120,12 +120,17 @@ export const login = mutation({
 });
 
 export const getUser = query({
-  args: { id: v.id("users") },
+  args: { id: v.string() },
   handler: async (ctx, args) => {
-    // Return user without exposing passwordHash
-    const user = await ctx.db.get(args.id);
-    if (!user) return null;
-    const { passwordHash, ...rest } = user as any;
-    return rest;
+    try {
+      // Convert string to Id type - Convex will validate it
+      const user = await ctx.db.get(args.id as any);
+      if (!user) return null;
+      const { passwordHash, ...rest } = user as any;
+      return rest;
+    } catch (error) {
+      console.error("Error in getUser:", error);
+      return null;
+    }
   },
 });

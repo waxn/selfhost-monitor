@@ -35,6 +35,11 @@ export default defineSchema({
     pingInterval: v.optional(v.number()),
     excludeFromUptime: v.optional(v.boolean()),
     userId: v.optional(v.id("users")),
+    // Email alert settings
+    emailAlertsEnabled: v.optional(v.boolean()),
+    notifyOnDown: v.optional(v.boolean()),
+    notifyOnRecovery: v.optional(v.boolean()),
+    lastAlertTimestamp: v.optional(v.number()),
   }).index("by_service", ["serviceId"]).index("by_user", ["userId"]),
 
   uptimeChecks: defineTable({
@@ -60,5 +65,8 @@ export default defineSchema({
     backgroundColor: v.optional(v.string()),
     backgroundImage: v.optional(v.union(v.string(), v.null())),
     tileOpacity: v.optional(v.number()),
+    // Email notification preferences
+    notificationEmail: v.optional(v.string()),
+    emailNotificationsEnabled: v.optional(v.boolean()),
   }).index("by_name", ["name"]).index("by_email", ["email"]),
 });

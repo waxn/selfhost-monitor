@@ -145,6 +145,16 @@ export async function decrypt(encryptedData: string | null | undefined, encrypti
     return encryptedData;
   }
 
+  // Check if data looks like it might be unencrypted (URL or plain text)
+  // URLs and plain text won't be valid base64 or will be too short for encrypted data
+  const looksLikeUrl = encryptedData.startsWith('http://') || encryptedData.startsWith('https://');
+  const tooShortForEncrypted = encryptedData.length < 16; // Encrypted data should be at least 16 chars (IV + some data)
+
+  if (looksLikeUrl || tooShortForEncrypted) {
+    // This is likely unencrypted data, return as-is
+    return encryptedData;
+  }
+
   try {
     const keyHex = getEncryptionKey(encryptionKey);
     const key = await importKey(keyHex);
@@ -170,9 +180,9 @@ export async function decrypt(encryptedData: string | null | undefined, encrypti
     return uint8ArrayToString(decryptedArray);
   } catch (error) {
     console.error("Decryption error:", error);
-    // Return null on decryption failure rather than throwing
-    // This allows graceful handling of data encrypted with old keys
-    return null;
+    // If decryption fails, the data might be unencrypted, return it as-is
+    // This allows graceful handling of data that was stored before encryption was enabled
+    return encryptedData;
   }
 }
 

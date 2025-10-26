@@ -2,9 +2,8 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { encrypt, decrypt } from "./encryption";
 
-// Get encryption key - must be set in Convex dashboard as ENCRYPTION_KEY
-// For now, we'll pass undefined and handle gracefully (store unencrypted)
-const getEncryptionKey = () => undefined as string | undefined;
+// Get encryption key from environment variables
+const getEncryptionKey = () => process.env.ENCRYPTION_KEY;
 
 export const create = mutation({
   args: {
@@ -13,6 +12,9 @@ export const create = mutation({
     url: v.string(),
     pingInterval: v.optional(v.number()),
     excludeFromUptime: v.optional(v.boolean()),
+    emailAlertsEnabled: v.optional(v.boolean()),
+    notifyOnDown: v.optional(v.boolean()),
+    notifyOnRecovery: v.optional(v.boolean()),
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
@@ -32,6 +34,9 @@ export const update = mutation({
     url: v.string(),
     pingInterval: v.optional(v.number()),
     excludeFromUptime: v.optional(v.boolean()),
+    emailAlertsEnabled: v.optional(v.boolean()),
+    notifyOnDown: v.optional(v.boolean()),
+    notifyOnRecovery: v.optional(v.boolean()),
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {

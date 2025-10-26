@@ -11,10 +11,13 @@
 import type * as auth from "../auth.js";
 import type * as crons from "../crons.js";
 import type * as devices from "../devices.js";
+import type * as emails from "../emails.js";
 import type * as encryption from "../encryption.js";
+import type * as migration from "../migration.js";
 import type * as seed from "../seed.js";
 import type * as serviceUrls from "../serviceUrls.js";
 import type * as services from "../services.js";
+import type * as testEmail from "../testEmail.js";
 import type * as uptime from "../uptime.js";
 import type * as users from "../users.js";
 
@@ -36,10 +39,13 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   crons: typeof crons;
   devices: typeof devices;
+  emails: typeof emails;
   encryption: typeof encryption;
+  migration: typeof migration;
   seed: typeof seed;
   serviceUrls: typeof serviceUrls;
   services: typeof services;
+  testEmail: typeof testEmail;
   uptime: typeof uptime;
   users: typeof users;
 }>;

@@ -18,6 +18,9 @@
 				url: string;
 				pingInterval?: number;
 				excludeFromUptime?: boolean;
+				emailAlertsEnabled?: boolean;
+				notifyOnDown?: boolean;
+				notifyOnRecovery?: boolean;
 			}>;
 		} | null;
 	}
@@ -42,7 +45,7 @@
 	let notes = $state('');
 	let deviceId = $state<Id<'devices'> | ''>('');
 	let iconUrl = $state('');
-	let urls = $state<Array<{ id?: Id<'serviceUrls'>; label: string; url: string; pingInterval?: number; excludeFromUptime?: boolean }>>([]);
+	let urls = $state<Array<{ id?: Id<'serviceUrls'>; label: string; url: string; pingInterval?: number; excludeFromUptime?: boolean; emailAlertsEnabled?: boolean; notifyOnDown?: boolean; notifyOnRecovery?: boolean }>>([]);
 
 	$effect(() => {
 		if (isOpen) {
@@ -51,7 +54,16 @@
 				notes = editingService.notes || '';
 				deviceId = editingService.deviceId || '';
 				iconUrl = editingService.iconUrl || '';
-				urls = editingService.urls.map((u) => ({ id: u._id, label: u.label, url: u.url, pingInterval: u.pingInterval ?? 5, excludeFromUptime: u.excludeFromUptime ?? false }));
+				urls = editingService.urls.map((u) => ({
+					id: u._id,
+					label: u.label,
+					url: u.url,
+					pingInterval: u.pingInterval ?? 5,
+					excludeFromUptime: u.excludeFromUptime ?? false,
+					emailAlertsEnabled: u.emailAlertsEnabled ?? false,
+					notifyOnDown: u.notifyOnDown ?? true,
+					notifyOnRecovery: u.notifyOnRecovery ?? true
+				}));
 			} else {
 				name = '';
 				notes = '';
@@ -63,7 +75,7 @@
 	});
 
 	function addUrl() {
-		urls = [...urls, { label: '', url: '', pingInterval: 5, excludeFromUptime: false }];
+		urls = [...urls, { label: '', url: '', pingInterval: 5, excludeFromUptime: false, emailAlertsEnabled: false, notifyOnDown: true, notifyOnRecovery: true }];
 	}
 
 	function removeUrlAtIndex(index: number) {
@@ -118,7 +130,17 @@
 				for (const url of urls) {
 					const normalizedUrl = normalizeUrl(url.url);
 					if (url.id) {
-						await updateUrl({ id: url.id, label: url.label, url: normalizedUrl, pingInterval: url.pingInterval, excludeFromUptime: url.excludeFromUptime, userId: currentUser._id });
+						await updateUrl({
+							id: url.id,
+							label: url.label,
+							url: normalizedUrl,
+							pingInterval: url.pingInterval,
+							excludeFromUptime: url.excludeFromUptime,
+							emailAlertsEnabled: url.emailAlertsEnabled,
+							notifyOnDown: url.notifyOnDown,
+							notifyOnRecovery: url.notifyOnRecovery,
+							userId: currentUser._id
+						});
 					} else {
 						await createUrl({
 							serviceId: editingService._id,
@@ -126,6 +148,9 @@
 							url: normalizedUrl,
 							pingInterval: url.pingInterval,
 							excludeFromUptime: url.excludeFromUptime,
+							emailAlertsEnabled: url.emailAlertsEnabled,
+							notifyOnDown: url.notifyOnDown,
+							notifyOnRecovery: url.notifyOnRecovery,
 							userId: currentUser._id
 						});
 					}
@@ -148,6 +173,9 @@
 						url: normalizedUrl,
 						pingInterval: url.pingInterval,
 						excludeFromUptime: url.excludeFromUptime,
+						emailAlertsEnabled: url.emailAlertsEnabled,
+						notifyOnDown: url.notifyOnDown,
+						notifyOnRecovery: url.notifyOnRecovery,
 						userId: currentUser._id
 					});
 				}
@@ -262,6 +290,7 @@
 							<span class="header-url">URL</span>
 							<span class="header-interval">Min</span>
 							<span class="header-skip">Skip</span>
+							<span class="header-email">Alert</span>
 							<span class="header-action"></span>
 						</div>
 					{/if}
@@ -272,8 +301,21 @@
 							<input type="text" bind:value={url.url} placeholder="youtube.com or 192.168.1.100:8080" class="url-input" />
 							<input type="number" bind:value={url.pingInterval} placeholder="5" min="1" class="url-interval" />
 							<input type="checkbox" bind:checked={url.excludeFromUptime} class="url-skip" title="Exclude from uptime monitoring" />
+							<input type="checkbox" bind:checked={url.emailAlertsEnabled} class="url-email" title="Enable email alerts for this URL" />
 							<button type="button" onclick={() => removeUrlAtIndex(i)} class="remove-btn">×</button>
 						</div>
+						{#if url.emailAlertsEnabled}
+							<div class="url-alert-options">
+								<label class="alert-checkbox-label">
+									<input type="checkbox" bind:checked={url.notifyOnDown} />
+									<span>Notify when down</span>
+								</label>
+								<label class="alert-checkbox-label">
+									<input type="checkbox" bind:checked={url.notifyOnRecovery} />
+									<span>Notify when recovered</span>
+								</label>
+							</div>
+						{/if}
 					{/each}
 				</div>
 
@@ -400,6 +442,11 @@
 		text-align: center;
 	}
 
+	.header-email {
+		flex: 0 0 30px;
+		text-align: center;
+	}
+
 	.header-action {
 		width: 32px;
 	}
@@ -460,6 +507,69 @@
 		top: 50%;
 		left: 50%;
 		transform: translate(-50%, -50%);
+	}
+
+	.url-email {
+		flex: 0 0 30px;
+		width: 18px;
+		height: 18px;
+		cursor: pointer;
+		appearance: none;
+		-webkit-appearance: none;
+		-moz-appearance: none;
+		background: #0a0e12;
+		border: 2px solid #3a3f47;
+		border-radius: 4px;
+		position: relative;
+		transition: all 0.2s;
+	}
+
+	.url-email:hover {
+		border-color: #d35400;
+		box-shadow: 0 0 6px rgba(211, 84, 0, 0.3);
+	}
+
+	.url-email:checked {
+		background: linear-gradient(135deg, #d35400 0%, #c54d00 100%);
+		border-color: #d35400;
+	}
+
+	.url-email:checked::after {
+		content: '📧';
+		position: absolute;
+		font-size: 11px;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+	}
+
+	.url-alert-options {
+		display: flex;
+		gap: 16px;
+		padding: 8px 12px 12px 12px;
+		background: rgba(211, 84, 0, 0.05);
+		border-left: 3px solid #d35400;
+		border-radius: 0 0 6px 6px;
+		margin: -4px 0 8px 0;
+	}
+
+	.alert-checkbox-label {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		cursor: pointer;
+		font-size: 13px;
+		color: #e8eaed;
+	}
+
+	.alert-checkbox-label input[type="checkbox"] {
+		width: 16px;
+		height: 16px;
+		cursor: pointer;
+	}
+
+	.alert-checkbox-label span {
+		user-select: none;
 	}
 
 	.icon-input-group {

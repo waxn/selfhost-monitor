@@ -76,6 +76,14 @@ export function useMutation(mutation: any) {
 	};
 }
 
+export function useAction(action: any) {
+	const client = getConvexClient();
+
+	return async (args: any) => {
+		return await client.action(action, args);
+	};
+}
+
 // Simple client-side auth helpers. This is minimal and intended for demo
 // purposes only. For production, wire up a proper auth provider.
 const USER_KEY = 'convex_user_id';
