@@ -57,7 +57,7 @@ Email alert functionality has been implemented for your selfhost monitor using R
 2. Sign up for a free account (3,000 emails/month)
 3. Verify your email address
 4. Navigate to API Keys section
-5. You already have your API key: `re_CVyeubix_EBy5vgobQpxzkrUYUEQJGFBN`
+5. Create a new API key
 
 ### Step 2: Configure Environment Variables
 
@@ -68,15 +68,12 @@ Email alert functionality has been implemented for your selfhost monitor using R
 3. Navigate to Settings → Environment Variables
 4. Add a new environment variable:
    - **Key**: `RESEND_API_KEY`
-   - **Value**: `re_CVyeubix_EBy5vgobQpxzkrUYUEQJGFBN`
+   - **Value**: `your_resend_api_key_here`
 5. Click "Save"
 
 #### For Local Development:
 
-1. Create/update your `.env.local` file:
-   ```bash
-   echo "RESEND_API_KEY=re_CVyeubix_EBy5vgobQpxzkrUYUEQJGFBN" >> .env.local
-   ```
+1. The API key is set in Convex environment variables only (not in local files for security)
 
 ### Step 3: Install Dependencies
 

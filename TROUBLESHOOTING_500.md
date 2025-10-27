@@ -24,7 +24,7 @@ This is the most important step!
 1. Go to https://dashboard.convex.dev
 2. Settings → Environment Variables
 3. Check if `RESEND_API_KEY` exists
-4. Value should be: `re_CVyeubix_EBy5vgobQpxzkrUYUEQJGFBN`
+4. Value should be your Resend API key (get it from Resend dashboard)
 5. If missing, click "Add Environment Variable"
 
 **After adding the variable, you MUST redeploy:**
