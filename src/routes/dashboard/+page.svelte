@@ -60,6 +60,13 @@
 	const services = useQuery(api.services.list, () => currentUser ? { userId: currentUser._id } : {});
 	const devices = useQuery(api.devices.list, () => currentUser ? { userId: currentUser._id } : {});
 	const userPreferences = useQuery(api.users.getPreferences, () => currentUser ? { userId: currentUser._id } : 'skip');
+
+	// Fetch URL status data separately - only when services are loaded
+	const serviceUrlsStatus = useQuery(api.services.getServiceUrlsWithStatus, () => {
+		if (!currentUser || !services.data) return 'skip';
+		const serviceIds = services.data.map(s => s._id);
+		return { serviceIds, userId: currentUser._id };
+	});
 	const removeService = useMutation(api.services.remove);
 	const removeDevice = useMutation(api.devices.remove);
 	const updatePreferences = useMutation(api.users.updatePreferences);
@@ -517,14 +524,21 @@
 	}
 
 	// Filter services based on selected device and sort by layoutOrder
+	// Also merge with URL status data
 	let filteredServices = $derived.by(() => {
 		if (!services.data) return [];
 		let filtered = !selectedDeviceId
 			? services.data
 			: services.data.filter(service => service.deviceId === selectedDeviceId);
 
+		// Merge with URL status data
+		const servicesWithUrls = filtered.map(service => ({
+			...service,
+			urls: serviceUrlsStatus.data?.[service._id] || []
+		}));
+
 		// Sort by layoutOrder
-		return [...filtered].sort((a, b) => {
+		return servicesWithUrls.sort((a, b) => {
 			const orderA = a.layoutOrder ?? 999999;
 			const orderB = b.layoutOrder ?? 999999;
 			return orderA - orderB;

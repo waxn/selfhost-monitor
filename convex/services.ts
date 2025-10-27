@@ -26,6 +26,7 @@ export const get = query({
   },
 });
 
+// Lightweight version - just returns service metadata without all the uptime data
 export const list = query({
   args: { userId: v.optional(v.id("users")) },
   handler: async (ctx, args) => {
@@ -33,87 +34,51 @@ export const list = query({
       if (!args.userId) return [];
       const services = await ctx.db.query("services").withIndex("by_user", (q: any) => q.eq("userId", args.userId)).collect();
 
-      // Populate device and urls for each service
+      // Just return basic service info - let other queries fetch URLs/uptime when needed
       return await Promise.all(services.map(async (service) => {
         try {
           const device = service.deviceId ? await ctx.db.get(service.deviceId) : null;
+
+          // Get URL count only, not full URL data
           const urls = await ctx.db
             .query("serviceUrls")
             .withIndex("by_service", (q: any) => q.eq("serviceId", service._id))
             .collect();
 
-          // Get latest uptime check for each URL
-          const urlsWithStatus = await Promise.all(urls.map(async (url) => {
-            try {
-              // Decrypt URL
-              const decryptedUrl = (await decrypt(url.url, getEncryptionKey())) || url.url;
-
-              // If excluded from uptime, return null for all status fields
-              if (url.excludeFromUptime) {
-                return {
-                  _id: url._id,
-                  label: url.label,
-                  url: decryptedUrl,
-                  isUp: null,
-                  lastCheck: null,
-                  responseTime: null,
-                  excludeFromUptime: true,
-                };
-              }
-
-              const latestCheck = await ctx.db
-                .query("uptimeChecks")
-                .withIndex("by_url", (q: any) => q.eq("serviceUrlId", url._id))
-                .order("desc")
-                .first();
-
-              return {
-                _id: url._id,
-                label: url.label,
-                url: decryptedUrl,
-                isUp: latestCheck?.isUp ?? null,
-                lastCheck: latestCheck?.timestamp ?? null,
-                responseTime: latestCheck?.responseTime ?? null,
-                excludeFromUptime: false,
-              };
-            } catch (urlError) {
-              console.error(`Error processing URL ${url._id}:`, urlError);
-              // Return URL with error state
-              return {
-                _id: url._id,
-                label: url.label,
-                url: url.url,
-                isUp: null,
-                lastCheck: null,
-                responseTime: null,
-                excludeFromUptime: false,
-              };
-            }
-          }));
-
-          // Decrypt notes
-          let decryptedNotes = null;
-          try {
-            decryptedNotes = service.notes ? await decrypt(service.notes, getEncryptionKey()) : null;
-          } catch (notesError) {
-            console.error(`Error decrypting notes for service ${service._id}:`, notesError);
-            // Leave notes as null on error
-          }
+          // Just count URLs, don't fetch uptime checks
+          const urlCount = urls.length;
+          const upCount = urls.filter(u => !u.excludeFromUptime).length;
 
           return {
-            ...service,
-            notes: decryptedNotes,
+            _id: service._id,
+            name: service.name,
+            deviceId: service.deviceId,
+            iconUrl: service.iconUrl,
+            userId: service.userId,
+            layoutX: service.layoutX,
+            layoutY: service.layoutY,
+            layoutWidth: service.layoutWidth,
+            layoutHeight: service.layoutHeight,
+            layoutOrder: service.layoutOrder,
+            useCustomAlerts: service.useCustomAlerts,
+            alertPriority: service.alertPriority,
+            alertTags: service.alertTags,
             device: device ? { name: device.name } : null,
-            urls: urlsWithStatus,
+            urlCount,
+            monitoredUrlCount: upCount,
+            // Don't include notes, urls, or uptime data - fetch separately when needed
           };
         } catch (serviceError) {
           console.error(`Error processing service ${service._id}:`, serviceError);
-          // Return service with minimal data
           return {
-            ...service,
-            notes: null,
+            _id: service._id,
+            name: service.name,
+            deviceId: service.deviceId,
+            iconUrl: service.iconUrl,
+            userId: service.userId,
             device: null,
-            urls: [],
+            urlCount: 0,
+            monitoredUrlCount: 0,
           };
         }
       }));
@@ -248,5 +213,55 @@ export const batchUpdateLayout = mutation({
       }
       await ctx.db.patch(id, layout);
     }
+  },
+});
+
+// Get URLs with uptime status for specific services (optimized for dashboard display)
+export const getServiceUrlsWithStatus = query({
+  args: { serviceIds: v.array(v.id("services")), userId: v.id("users") },
+  handler: async (ctx, args) => {
+    // Batch fetch all URLs for the requested services
+    const allUrls = await ctx.db.query("serviceUrls").collect();
+    const relevantUrls = allUrls.filter(url =>
+      args.serviceIds.includes(url.serviceId) &&
+      (!url.userId || url.userId === args.userId)
+    );
+
+    // Decrypt URLs and fetch latest checks in parallel
+    const urlsWithStatus = await Promise.all(
+      relevantUrls.map(async (url) => {
+        // Fetch latest check for this URL
+        const latestCheck = await ctx.db
+          .query("uptimeChecks")
+          .withIndex("by_url", (q) => q.eq("serviceUrlId", url._id))
+          .order("desc")
+          .first();
+
+        // Decrypt URL
+        const decryptedUrl = (await decrypt(url.url, getEncryptionKey())) || url.url;
+
+        return {
+          _id: url._id,
+          serviceId: url.serviceId,
+          label: url.label,
+          url: decryptedUrl,
+          isUp: latestCheck?.isUp ?? null,
+          lastCheck: latestCheck?.timestamp ?? null,
+          responseTime: latestCheck?.responseTime ?? null,
+          excludeFromUptime: url.excludeFromUptime,
+        };
+      })
+    );
+
+    // Group by service ID for easy lookup
+    const urlsByService: Record<string, any[]> = {};
+    for (const url of urlsWithStatus) {
+      if (!urlsByService[url.serviceId]) {
+        urlsByService[url.serviceId] = [];
+      }
+      urlsByService[url.serviceId].push(url);
+    }
+
+    return urlsByService;
   },
 });
