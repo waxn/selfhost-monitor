@@ -3,10 +3,10 @@ import { internal } from "./_generated/api";
 
 const crons = cronJobs();
 
-// Check URLs every minute (individual URLs respect their own intervals)
+// Check URLs every 10 seconds for immediate alerting
 crons.interval(
   "check uptime",
-  { minutes: 1 },
+  { seconds: 10 },
   internal.uptime.checkAllUrls
 );
 

@@ -47,16 +47,30 @@ export const checkUrl = internalAction({
 
     const timestamp = Date.now();
 
-    // Record the check
-    await ctx.runMutation(internal.uptime.recordCheck, {
-      serviceUrlId: args.urlId,
-      timestamp,
-      isUp,
-      responseTime,
-      statusCode,
-      error,
-      userId: url.userId,
-    });
+    // Determine if we should save this check to the database
+    const statusChanged = lastCheck ? lastCheck.isUp !== isUp : true; // Always save first check
+    const saveInterval = (url.saveInterval ?? 5) * 60 * 1000; // convert minutes to ms, default 5 min
+    const lastSave = url.lastSaveTimestamp ?? 0;
+    const shouldSave = statusChanged || (timestamp - lastSave >= saveInterval);
+
+    // Only record the check if status changed or save interval reached
+    if (shouldSave) {
+      await ctx.runMutation(internal.uptime.recordCheck, {
+        serviceUrlId: args.urlId,
+        timestamp,
+        isUp,
+        responseTime,
+        statusCode,
+        error,
+        userId: url.userId,
+      });
+
+      // Update last save timestamp
+      await ctx.runMutation(internal.uptime.updateLastSaveTimestamp, {
+        urlId: args.urlId,
+        timestamp,
+      });
+    }
 
     // Check if we should send email alerts (only if URL has userId configured)
     console.log('[Email Debug] Checking email conditions for URL:', url.label);
@@ -139,29 +153,23 @@ export const checkUrl = internalAction({
 export const checkAllUrls = internalAction({
   handler: async (ctx) => {
     const urls = await ctx.runQuery(internal.uptime.getAllUrls);
-    const now = Date.now();
 
-    // Filter URLs that need to be checked based on their interval
-    const urlsToCheck = [];
-    for (const url of urls) {
+    // Filter URLs that should be monitored
+    const urlsToCheck = urls.filter((url) => {
       // Skip if excluded from uptime monitoring
-      if (url.excludeFromUptime) continue;
+      if (url.excludeFromUptime) return false;
 
       // Skip if no userId (orphaned URLs from migration)
       if (!url.userId) {
         console.warn(`Skipping URL ${url._id} (${url.label}) - no userId`);
-        continue;
+        return false;
       }
 
-      const lastCheck = await ctx.runQuery(internal.uptime.getLastCheck, { urlId: url._id });
-      const interval = (url.pingInterval ?? 5) * 60 * 1000; // convert minutes to ms
+      return true;
+    });
 
-      if (!lastCheck || (now - lastCheck.timestamp) >= interval) {
-        urlsToCheck.push(url);
-      }
-    }
-
-    // Check URLs that are due in parallel
+    // Check all active URLs in parallel (runs every 10 seconds via cron)
+    // Individual URLs control save frequency via saveInterval
     await Promise.all(
       urlsToCheck.map((url: { _id: any }) =>
         ctx.runAction(internal.uptime.checkUrl, { urlId: url._id })
@@ -348,6 +356,19 @@ export const updateLastAlertTimestamp = internalMutation({
   handler: async (ctx, args) => {
     await ctx.db.patch(args.urlId, {
       lastAlertTimestamp: args.timestamp,
+    });
+  },
+});
+
+// Update last save timestamp
+export const updateLastSaveTimestamp = internalMutation({
+  args: {
+    urlId: v.id("serviceUrls"),
+    timestamp: v.number(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.urlId, {
+      lastSaveTimestamp: args.timestamp,
     });
   },
 });

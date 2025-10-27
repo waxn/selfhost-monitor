@@ -32,7 +32,8 @@ export default defineSchema({
     serviceId: v.id("services"),
     label: v.string(),
     url: v.string(), // ENCRYPTED: May contain private IPs/internal URLs
-    pingInterval: v.optional(v.number()),
+    pingInterval: v.optional(v.number()), // How often to ping (seconds, default: 10)
+    saveInterval: v.optional(v.number()), // How often to save to DB (minutes, default: 5)
     excludeFromUptime: v.optional(v.boolean()),
     userId: v.optional(v.id("users")),
     // Email alert settings
@@ -40,6 +41,8 @@ export default defineSchema({
     notifyOnDown: v.optional(v.boolean()),
     notifyOnRecovery: v.optional(v.boolean()),
     lastAlertTimestamp: v.optional(v.number()),
+    // Track last save for interval-based saving
+    lastSaveTimestamp: v.optional(v.number()),
   }).index("by_service", ["serviceId"]).index("by_user", ["userId"]),
 
   uptimeChecks: defineTable({
