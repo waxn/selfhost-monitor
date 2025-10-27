@@ -41,6 +41,13 @@ export default defineSchema({
     notifyOnDown: v.optional(v.boolean()),
     notifyOnRecovery: v.optional(v.boolean()),
     lastAlertTimestamp: v.optional(v.number()),
+    // Advanced alert settings
+    minDowntimeDuration: v.optional(v.number()), // Minimum downtime in seconds before alerting (default: 0 = immediate)
+    consecutiveFailures: v.optional(v.number()), // Number of consecutive failures before alerting (default: 1)
+    alertCooldown: v.optional(v.number()), // Minutes between alerts for same URL (default: 15)
+    // Track consecutive failure state
+    currentFailureCount: v.optional(v.number()), // Current consecutive failure count
+    firstFailureTimestamp: v.optional(v.number()), // Timestamp of first failure in current streak
     // Track last save for interval-based saving
     lastSaveTimestamp: v.optional(v.number()),
   }).index("by_service", ["serviceId"]).index("by_user", ["userId"]),
@@ -72,4 +79,31 @@ export default defineSchema({
     notificationEmail: v.optional(v.string()),
     emailNotificationsEnabled: v.optional(v.boolean()),
   }).index("by_name", ["name"]).index("by_email", ["email"]),
+
+  // Alert settings and templates
+  alertSettings: defineTable({
+    userId: v.id("users"),
+    // Global alert defaults
+    defaultMinDowntime: v.optional(v.number()), // seconds
+    defaultConsecutiveFailures: v.optional(v.number()),
+    defaultAlertCooldown: v.optional(v.number()), // minutes
+    // Email template customization
+    downAlertSubject: v.optional(v.string()),
+    downAlertBody: v.optional(v.string()), // HTML/Text template with variables
+    recoveryAlertSubject: v.optional(v.string()),
+    recoveryAlertBody: v.optional(v.string()),
+    // Alert behavior
+    sendRecoveryAlerts: v.optional(v.boolean()),
+    sendDowntimeReports: v.optional(v.boolean()), // Daily/weekly summaries
+    reportFrequency: v.optional(v.union(v.literal("daily"), v.literal("weekly"), v.literal("monthly"))),
+    reportDay: v.optional(v.number()), // Day of week (0-6) or month (1-31)
+    // Alert channels (future expansion)
+    enableWebhooks: v.optional(v.boolean()),
+    webhookUrl: v.optional(v.string()),
+    // Quiet hours
+    quietHoursEnabled: v.optional(v.boolean()),
+    quietHoursStart: v.optional(v.string()), // HH:MM format
+    quietHoursEnd: v.optional(v.string()), // HH:MM format
+    timezone: v.optional(v.string()),
+  }).index("by_user", ["userId"]),
 });

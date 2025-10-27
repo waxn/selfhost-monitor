@@ -89,13 +89,58 @@ export const checkUrl = internalAction({
         const statusChanged = lastCheck ? lastCheck.isUp !== isUp : false;
         console.log('[Email Debug] Status changed:', statusChanged, '(lastCheck.isUp:', lastCheck?.isUp, 'current isUp:', isUp, ')');
 
-        // Check rate limiting inline (avoid extra query)
-        const cooldownPeriod = 15 * 60 * 1000; // 15 minutes
-        const shouldAlert = statusChanged &&
-          ((!isUp && (url.notifyOnDown ?? true)) || (isUp && (url.notifyOnRecovery ?? true))) &&
-          (!url.lastAlertTimestamp || (timestamp - url.lastAlertTimestamp >= cooldownPeriod));
+        // Track consecutive failures and downtime duration
+        let currentFailureCount = url.currentFailureCount ?? 0;
+        let firstFailureTime = url.firstFailureTimestamp ?? timestamp;
 
-        console.log('[Email Debug] shouldAlert returned:', shouldAlert);
+        if (!isUp) {
+          // Service is down
+          if (!lastCheck || lastCheck.isUp) {
+            // First failure - start tracking
+            currentFailureCount = 1;
+            firstFailureTime = timestamp;
+          } else {
+            // Consecutive failure - increment counter
+            currentFailureCount++;
+          }
+
+          // Update failure tracking in database
+          await ctx.runMutation(internal.uptime.updateFailureTracking, {
+            urlId: args.urlId,
+            currentFailureCount,
+            firstFailureTimestamp: firstFailureTime,
+          });
+        } else if (lastCheck && !lastCheck.isUp) {
+          // Service recovered - reset failure tracking
+          await ctx.runMutation(internal.uptime.resetFailureTracking, {
+            urlId: args.urlId,
+          });
+        }
+
+        // Check advanced alert conditions
+        const cooldownPeriod = (url.alertCooldown ?? 15) * 60 * 1000; // Default 15 minutes
+        const minDowntime = (url.minDowntimeDuration ?? 0) * 1000; // Convert seconds to ms
+        const requiredFailures = url.consecutiveFailures ?? 1; // Default 1 failure
+
+        const downtimeDuration = firstFailureTime ? timestamp - firstFailureTime : 0;
+        const meetsDowntimeThreshold = downtimeDuration >= minDowntime;
+        const meetsFailureThreshold = currentFailureCount >= requiredFailures;
+        const cooldownExpired = !url.lastAlertTimestamp || (timestamp - url.lastAlertTimestamp >= cooldownPeriod);
+
+        // Determine if we should send an alert
+        let shouldAlert = false;
+        if (!isUp && (url.notifyOnDown ?? true)) {
+          // Down alert: check all conditions
+          shouldAlert = statusChanged && meetsDowntimeThreshold && meetsFailureThreshold && cooldownExpired;
+        } else if (isUp && lastCheck && !lastCheck.isUp && (url.notifyOnRecovery ?? true)) {
+          // Recovery alert: only check cooldown
+          shouldAlert = cooldownExpired;
+        }
+
+        console.log('[Email Debug] Alert conditions - shouldAlert:', shouldAlert,
+          'downtime:', downtimeDuration, 'threshold:', minDowntime,
+          'failures:', currentFailureCount, 'required:', requiredFailures,
+          'cooldown:', cooldownExpired);
 
         if (shouldAlert) {
           // Use passed data if available, otherwise query
@@ -117,6 +162,7 @@ export const checkUrl = internalAction({
                 errorMessage: error,
                 statusCode,
                 timestamp,
+                userId: url.userId,
               });
             } else if (isUp && lastCheck && !lastCheck.isUp && (url.notifyOnRecovery ?? true)) {
               // Calculate downtime duration
@@ -132,6 +178,7 @@ export const checkUrl = internalAction({
                 statusCode,
                 timestamp,
                 downtimeDuration,
+                userId: url.userId,
               });
             }
 
@@ -432,6 +479,34 @@ export const updateLastSaveTimestamp = internalMutation({
   handler: async (ctx, args) => {
     await ctx.db.patch(args.urlId, {
       lastSaveTimestamp: args.timestamp,
+    });
+  },
+});
+
+// Update failure tracking
+export const updateFailureTracking = internalMutation({
+  args: {
+    urlId: v.id("serviceUrls"),
+    currentFailureCount: v.number(),
+    firstFailureTimestamp: v.number(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.urlId, {
+      currentFailureCount: args.currentFailureCount,
+      firstFailureTimestamp: args.firstFailureTimestamp,
+    });
+  },
+});
+
+// Reset failure tracking (on recovery)
+export const resetFailureTracking = internalMutation({
+  args: {
+    urlId: v.id("serviceUrls"),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.urlId, {
+      currentFailureCount: 0,
+      firstFailureTimestamp: undefined,
     });
   },
 });

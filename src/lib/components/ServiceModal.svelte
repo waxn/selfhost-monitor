@@ -21,6 +21,9 @@
 				emailAlertsEnabled?: boolean;
 				notifyOnDown?: boolean;
 				notifyOnRecovery?: boolean;
+				minDowntimeDuration?: number;
+				consecutiveFailures?: number;
+				alertCooldown?: number;
 			}>;
 		} | null;
 	}
@@ -45,7 +48,7 @@
 	let notes = $state('');
 	let deviceId = $state<Id<'devices'> | ''>('');
 	let iconUrl = $state('');
-	let urls = $state<Array<{ id?: Id<'serviceUrls'>; label: string; url: string; pingInterval?: number; excludeFromUptime?: boolean; emailAlertsEnabled?: boolean; notifyOnDown?: boolean; notifyOnRecovery?: boolean }>>([]);
+	let urls = $state<Array<{ id?: Id<'serviceUrls'>; label: string; url: string; pingInterval?: number; excludeFromUptime?: boolean; emailAlertsEnabled?: boolean; notifyOnDown?: boolean; notifyOnRecovery?: boolean; minDowntimeDuration?: number; consecutiveFailures?: number; alertCooldown?: number }>>([]);
 
 	$effect(() => {
 		if (isOpen) {
@@ -62,7 +65,10 @@
 					excludeFromUptime: u.excludeFromUptime ?? false,
 					emailAlertsEnabled: u.emailAlertsEnabled ?? false,
 					notifyOnDown: u.notifyOnDown ?? true,
-					notifyOnRecovery: u.notifyOnRecovery ?? true
+					notifyOnRecovery: u.notifyOnRecovery ?? true,
+					minDowntimeDuration: u.minDowntimeDuration ?? 0,
+					consecutiveFailures: u.consecutiveFailures ?? 1,
+					alertCooldown: u.alertCooldown ?? 15
 				}));
 			} else {
 				name = '';
@@ -75,7 +81,7 @@
 	});
 
 	function addUrl() {
-		urls = [...urls, { label: '', url: '', pingInterval: 5, excludeFromUptime: false, emailAlertsEnabled: false, notifyOnDown: true, notifyOnRecovery: true }];
+		urls = [...urls, { label: '', url: '', pingInterval: 5, excludeFromUptime: false, emailAlertsEnabled: false, notifyOnDown: true, notifyOnRecovery: true, minDowntimeDuration: 0, consecutiveFailures: 1, alertCooldown: 15 }];
 	}
 
 	function removeUrlAtIndex(index: number) {
@@ -146,6 +152,9 @@
 							emailAlertsEnabled: url.emailAlertsEnabled,
 							notifyOnDown: url.notifyOnDown,
 							notifyOnRecovery: url.notifyOnRecovery,
+							minDowntimeDuration: url.minDowntimeDuration,
+							consecutiveFailures: url.consecutiveFailures,
+							alertCooldown: url.alertCooldown,
 							userId: currentUser._id
 						});
 					} else {
@@ -159,6 +168,9 @@
 							emailAlertsEnabled: url.emailAlertsEnabled,
 							notifyOnDown: url.notifyOnDown,
 							notifyOnRecovery: url.notifyOnRecovery,
+							minDowntimeDuration: url.minDowntimeDuration,
+							consecutiveFailures: url.consecutiveFailures,
+							alertCooldown: url.alertCooldown,
 							userId: currentUser._id
 						});
 					}
@@ -184,6 +196,9 @@
 						emailAlertsEnabled: url.emailAlertsEnabled,
 						notifyOnDown: url.notifyOnDown,
 						notifyOnRecovery: url.notifyOnRecovery,
+						minDowntimeDuration: url.minDowntimeDuration,
+						consecutiveFailures: url.consecutiveFailures,
+						alertCooldown: url.alertCooldown,
 						userId: currentUser._id
 					});
 				}
@@ -325,14 +340,52 @@
 						</div>
 						{#if url.emailAlertsEnabled}
 							<div class="url-alert-options">
-								<label class="alert-checkbox-label">
-									<input type="checkbox" bind:checked={url.notifyOnDown} />
-									<span>Notify when down</span>
-								</label>
-								<label class="alert-checkbox-label">
-									<input type="checkbox" bind:checked={url.notifyOnRecovery} />
-									<span>Notify when recovered</span>
-								</label>
+								<div class="alert-options-row">
+									<label class="alert-checkbox-label">
+										<input type="checkbox" bind:checked={url.notifyOnDown} />
+										<span>Notify when down</span>
+									</label>
+									<label class="alert-checkbox-label">
+										<input type="checkbox" bind:checked={url.notifyOnRecovery} />
+										<span>Notify when recovered</span>
+									</label>
+								</div>
+
+								<div class="alert-advanced-settings">
+									<label class="alert-setting-label">
+										<span class="setting-name">Min downtime (seconds):</span>
+										<input
+											type="number"
+											bind:value={url.minDowntimeDuration}
+											min="0"
+											step="10"
+											class="alert-number-input"
+											title="Minimum seconds the service must be down before alerting (0 = immediate)"
+										/>
+									</label>
+									<label class="alert-setting-label">
+										<span class="setting-name">Consecutive failures:</span>
+										<input
+											type="number"
+											bind:value={url.consecutiveFailures}
+											min="1"
+											max="10"
+											class="alert-number-input"
+											title="Number of failed checks in a row before alerting"
+										/>
+									</label>
+									<label class="alert-setting-label">
+										<span class="setting-name">Alert cooldown (minutes):</span>
+										<input
+											type="number"
+											bind:value={url.alertCooldown}
+											min="1"
+											max="1440"
+											class="alert-number-input"
+											title="Minutes to wait between sending alerts for the same URL"
+										/>
+									</label>
+								</div>
 							</div>
 						{/if}
 					{/each}
@@ -591,12 +644,18 @@
 
 	.url-alert-options {
 		display: flex;
-		gap: 16px;
-		padding: 8px 12px 12px 12px;
+		flex-direction: column;
+		gap: 12px;
+		padding: 12px;
 		background: rgba(211, 84, 0, 0.05);
 		border-left: 3px solid #d35400;
 		border-radius: 0 0 6px 6px;
 		margin: -4px 0 8px 0;
+	}
+
+	.alert-options-row {
+		display: flex;
+		gap: 16px;
 	}
 
 	.alert-checkbox-label {
@@ -616,6 +675,45 @@
 
 	.alert-checkbox-label span {
 		user-select: none;
+	}
+
+	.alert-advanced-settings {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		padding-top: 8px;
+		border-top: 1px solid rgba(211, 84, 0, 0.2);
+	}
+
+	.alert-setting-label {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 12px;
+		font-size: 12px;
+		color: #a0a4a8;
+	}
+
+	.setting-name {
+		flex-shrink: 0;
+		font-weight: 500;
+	}
+
+	.alert-number-input {
+		width: 80px;
+		padding: 6px 8px;
+		font-size: 13px;
+		text-align: right;
+		background: #1e2329;
+		border: 1px solid #3a3f47;
+		border-radius: 6px;
+		color: #e8eaed;
+	}
+
+	.alert-number-input:focus {
+		outline: none;
+		border-color: #d35400;
+		box-shadow: 0 0 6px rgba(211, 84, 0, 0.3);
 	}
 
 	.icon-input-group {

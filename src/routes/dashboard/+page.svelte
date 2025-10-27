@@ -667,7 +667,12 @@
 										<div class="settings-divider"></div>
 
 										<div class="settings-option">
-											<div class="settings-label">Email Notifications</div>
+											<div class="settings-label-with-link">
+												<div class="settings-label">Email Notifications</div>
+												<a href="/alert-settings" class="advanced-settings-link">
+													⚙️ Advanced Alert Settings
+												</a>
+											</div>
 											<label class="toggle-label">
 												<span>Enable Alerts</span>
 												<input
@@ -838,7 +843,12 @@
 									<div class="settings-divider"></div>
 
 									<div class="settings-option">
-										<div class="settings-label">Email Notifications</div>
+										<div class="settings-label-with-link">
+											<div class="settings-label">Email Notifications</div>
+											<a href="/alert-settings" class="advanced-settings-link">
+												⚙️ Advanced Alert Settings
+											</a>
+										</div>
 										<label class="toggle-label">
 											<span>Enable Alerts</span>
 											<input
@@ -1257,6 +1267,28 @@
 		color: #a0a4a8;
 		margin-bottom: 10px;
 		font-weight: 500;
+	}
+
+	.settings-label-with-link {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 10px;
+	}
+
+	.advanced-settings-link {
+		font-size: 12px;
+		color: #d35400;
+		text-decoration: none;
+		padding: 4px 8px;
+		border-radius: 4px;
+		transition: all 0.2s;
+		white-space: nowrap;
+	}
+
+	.advanced-settings-link:hover {
+		background: rgba(211, 84, 0, 0.1);
+		text-decoration: underline;
 	}
 
 	.color-grid {

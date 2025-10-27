@@ -1,6 +1,21 @@
 import { v } from "convex/values";
-import { internalAction } from "./_generated/server";
+import { internalAction, internalQuery } from "./_generated/server";
+import { internal } from "./_generated/api";
 import { Resend } from "resend";
+
+// Helper to render template with variables
+function renderTemplate(template: string, variables: Record<string, any>): string {
+  let rendered = template;
+  for (const [key, value] of Object.entries(variables)) {
+    const regex = new RegExp(`{{${key}}}`, 'g');
+    rendered = rendered.replace(regex, String(value ?? ''));
+  }
+  // Handle conditional blocks: {{#if variable}}...{{/if}}
+  rendered = rendered.replace(/{{#if\s+(\w+)}}(.*?){{\/if}}/gs, (match, varName, content) => {
+    return variables[varName] ? content : '';
+  });
+  return rendered;
+}
 
 export const sendDownAlert = internalAction({
   args: {
@@ -11,6 +26,7 @@ export const sendDownAlert = internalAction({
     errorMessage: v.optional(v.string()),
     statusCode: v.optional(v.number()),
     timestamp: v.number(),
+    userId: v.optional(v.id("users")), // To fetch custom templates
   },
   handler: async (ctx, args) => {
     // Access environment variable through ctx in Convex
@@ -31,17 +47,36 @@ export const sendDownAlert = internalAction({
       const formattedTime = new Date(args.timestamp).toLocaleString();
       const recipientName = args.recipientName || "User";
 
-      const errorDetails = args.errorMessage
-        ? `<p><strong>Error:</strong> ${args.errorMessage}</p>`
-        : args.statusCode
-        ? `<p><strong>Status Code:</strong> ${args.statusCode}</p>`
-        : "";
+      // Fetch custom templates if userId is provided
+      let subject = `🔴 Service Down: ${args.serviceName} - ${args.urlLabel}`;
+      let htmlBody = getDefaultDownHTML(args, recipientName, formattedTime);
+
+      if (args.userId) {
+        const settings = await ctx.runQuery(internal.alertSettings.get, { userId: args.userId });
+        if (settings) {
+          const variables = {
+            serviceName: args.serviceName,
+            urlLabel: args.urlLabel,
+            timestamp: formattedTime,
+            statusCode: args.statusCode,
+            errorMessage: args.errorMessage,
+            recipientName,
+          };
+
+          if (settings.downAlertSubject) {
+            subject = renderTemplate(settings.downAlertSubject, variables);
+          }
+          if (settings.downAlertBody) {
+            htmlBody = renderTemplate(settings.downAlertBody, variables);
+          }
+        }
+      }
 
       const response = await resend.emails.send({
         from: "SelfHost Monitor <alerts@hlm.waxnflaxnai.com>",
         to: args.recipientEmail,
-        subject: `🔴 Service Down: ${args.serviceName} - ${args.urlLabel}`,
-        html: `
+        subject,
+        html: htmlBody.includes('<!DOCTYPE') || htmlBody.includes('<html') ? htmlBody : `
           <!DOCTYPE html>
           <html>
             <head>
@@ -163,6 +198,7 @@ export const sendRecoveryAlert = internalAction({
     statusCode: v.optional(v.number()),
     timestamp: v.number(),
     downtimeDuration: v.optional(v.number()),
+    userId: v.optional(v.id("users")),
   },
   handler: async (ctx, args) => {
     // Access environment variable through ctx in Convex
@@ -178,20 +214,39 @@ export const sendRecoveryAlert = internalAction({
 
       const formattedTime = new Date(args.timestamp).toLocaleString();
       const recipientName = args.recipientName || "User";
+      const formattedDowntime = args.downtimeDuration ? formatDuration(args.downtimeDuration) : undefined;
 
-      const downtimeInfo = args.downtimeDuration
-        ? `<p><strong>Downtime Duration:</strong> ${formatDuration(args.downtimeDuration)}</p>`
-        : "";
+      // Fetch custom templates if userId is provided
+      let subject = `✅ Service Recovered: ${args.serviceName} - ${args.urlLabel}`;
+      let htmlBody = getDefaultRecoveryHTML(args, recipientName, formattedTime);
 
-      const responseTimeInfo = args.responseTime
-        ? `<p><strong>Response Time:</strong> ${args.responseTime}ms</p>`
-        : "";
+      if (args.userId) {
+        const settings = await ctx.runQuery(internal.alertSettings.get, { userId: args.userId });
+        if (settings) {
+          const variables = {
+            serviceName: args.serviceName,
+            urlLabel: args.urlLabel,
+            timestamp: formattedTime,
+            statusCode: args.statusCode,
+            responseTime: args.responseTime,
+            downtimeDuration: formattedDowntime,
+            recipientName,
+          };
+
+          if (settings.recoveryAlertSubject) {
+            subject = renderTemplate(settings.recoveryAlertSubject, variables);
+          }
+          if (settings.recoveryAlertBody) {
+            htmlBody = renderTemplate(settings.recoveryAlertBody, variables);
+          }
+        }
+      }
 
       const response = await resend.emails.send({
         from: "SelfHost Monitor <alerts@hlm.waxnflaxnai.com>",
         to: args.recipientEmail,
-        subject: `✅ Service Recovered: ${args.serviceName} - ${args.urlLabel}`,
-        html: `
+        subject,
+        html: htmlBody.includes('<!DOCTYPE') || htmlBody.includes('<html') ? htmlBody : `
           <!DOCTYPE html>
           <html>
             <head>
@@ -307,4 +362,51 @@ function formatDuration(ms: number): string {
   } else {
     return `${seconds}s`;
   }
+}
+
+function getDefaultDownHTML(args: any, recipientName: string, formattedTime: string): string {
+  const errorDetails = args.errorMessage
+    ? `<p><strong>Error:</strong> ${args.errorMessage}</p>`
+    : args.statusCode
+    ? `<p><strong>Status Code:</strong> ${args.statusCode}</p>`
+    : "";
+
+  return `
+    <p>Hello ${recipientName},</p>
+    <p>Your monitored service has gone down and is currently unreachable.</p>
+    <div class="service-info">
+      <p><strong>Service:</strong> ${args.serviceName}</p>
+      <p><strong>URL Label:</strong> ${args.urlLabel}</p>
+      ${errorDetails}
+    </div>
+    <p>Please check your service and take appropriate action.</p>
+    <div class="timestamp">
+      <strong>Time:</strong> ${formattedTime}
+    </div>
+  `;
+}
+
+function getDefaultRecoveryHTML(args: any, recipientName: string, formattedTime: string): string {
+  const downtimeInfo = args.downtimeDuration
+    ? `<p><strong>Downtime Duration:</strong> ${formatDuration(args.downtimeDuration)}</p>`
+    : "";
+
+  const responseTimeInfo = args.responseTime
+    ? `<p><strong>Response Time:</strong> ${args.responseTime}ms</p>`
+    : "";
+
+  return `
+    <p>Hello ${recipientName},</p>
+    <p>Good news! Your service is back online and responding normally.</p>
+    <div class="service-info">
+      <p><strong>Service:</strong> ${args.serviceName}</p>
+      <p><strong>URL Label:</strong> ${args.urlLabel}</p>
+      ${responseTimeInfo}
+      ${args.statusCode ? `<p><strong>Status Code:</strong> ${args.statusCode}</p>` : ""}
+      ${downtimeInfo}
+    </div>
+    <div class="timestamp">
+      <strong>Recovery Time:</strong> ${formattedTime}
+    </div>
+  `;
 }

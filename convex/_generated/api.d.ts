@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as alertSettings from "../alertSettings.js";
 import type * as auth from "../auth.js";
 import type * as crons from "../crons.js";
 import type * as debugEmail from "../debugEmail.js";
@@ -37,6 +38,7 @@ import type {
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  alertSettings: typeof alertSettings;
   auth: typeof auth;
   crons: typeof crons;
   debugEmail: typeof debugEmail;

@@ -15,6 +15,10 @@ export const create = mutation({
     emailAlertsEnabled: v.optional(v.boolean()),
     notifyOnDown: v.optional(v.boolean()),
     notifyOnRecovery: v.optional(v.boolean()),
+    // Advanced alert settings
+    minDowntimeDuration: v.optional(v.number()),
+    consecutiveFailures: v.optional(v.number()),
+    alertCooldown: v.optional(v.number()),
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
@@ -37,6 +41,10 @@ export const update = mutation({
     emailAlertsEnabled: v.optional(v.boolean()),
     notifyOnDown: v.optional(v.boolean()),
     notifyOnRecovery: v.optional(v.boolean()),
+    // Advanced alert settings
+    minDowntimeDuration: v.optional(v.number()),
+    consecutiveFailures: v.optional(v.number()),
+    alertCooldown: v.optional(v.number()),
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
