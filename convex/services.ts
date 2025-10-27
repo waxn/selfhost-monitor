@@ -256,10 +256,11 @@ export const getServiceUrlsWithStatus = query({
     // Group by service ID for easy lookup
     const urlsByService: Record<string, any[]> = {};
     for (const url of urlsWithStatus) {
-      if (!urlsByService[url.serviceId]) {
-        urlsByService[url.serviceId] = [];
+      const serviceIdStr = url.serviceId as string;
+      if (!urlsByService[serviceIdStr]) {
+        urlsByService[serviceIdStr] = [];
       }
-      urlsByService[url.serviceId].push(url);
+      urlsByService[serviceIdStr].push(url);
     }
 
     return urlsByService;

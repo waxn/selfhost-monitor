@@ -534,7 +534,7 @@
 		// Merge with URL status data
 		const servicesWithUrls = filtered.map(service => ({
 			...service,
-			urls: serviceUrlsStatus.data?.[service._id] || []
+			urls: serviceUrlsStatus.data?.[service._id as string] || []
 		}));
 
 		// Sort by layoutOrder
