@@ -687,6 +687,11 @@
 													class="email-input"
 												/>
 												<div class="email-hint">Receive down alerts for your monitored services</div>
+												{#if emailNotificationsEnabled}
+													<div class="email-warning">
+														⚠️ You must enable alerts for each service URL individually. Edit each service and check the "Alert" checkbox.
+													</div>
+												{/if}
 												<button
 													onclick={sendTestEmail}
 													disabled={testEmailStatus === 'sending' || !notificationEmail}
@@ -853,6 +858,11 @@
 												class="email-input"
 											/>
 											<div class="email-hint">Receive down alerts for your monitored services</div>
+											{#if emailNotificationsEnabled}
+												<div class="email-warning">
+													⚠️ You must enable alerts for each service URL individually. Edit each service and check the "Alert" checkbox.
+												</div>
+											{/if}
 											<button
 												onclick={sendTestEmail}
 												disabled={testEmailStatus === 'sending' || !notificationEmail}
@@ -1426,6 +1436,17 @@
 		margin-top: 6px;
 		font-size: 12px;
 		color: #6c757d;
+		line-height: 1.4;
+	}
+
+	.email-warning {
+		margin-top: 8px;
+		padding: 10px 12px;
+		background: rgba(211, 84, 0, 0.1);
+		border: 1px solid rgba(211, 84, 0, 0.3);
+		border-radius: 6px;
+		font-size: 12px;
+		color: #d35400;
 		line-height: 1.4;
 	}
 
