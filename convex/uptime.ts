@@ -56,13 +56,20 @@ export const checkUrl = internalAction({
     const timestamp = Date.now();
 
     // Determine if we should save this check to the database
-    const statusChanged = lastCheck ? lastCheck.isUp !== isUp : true; // Always save first check
-    const saveInterval = (url.saveInterval ?? 15) * 60 * 1000; // convert minutes to ms, default 15 min
-    const lastSave = url.lastSaveTimestamp ?? 0;
-    const shouldSave = statusChanged || (timestamp - lastSave >= saveInterval);
+    const statusChanged = lastCheck ? lastCheck.isUp !== isUp : false; // Only save on actual status change
+    const saveInterval = (url.saveInterval ?? 10) * 60 * 1000; // convert minutes to ms, default 10 min
+
+    // For lastSaveTimestamp, use lastCheck timestamp as fallback if not set
+    // This prevents saving every check for existing URLs
+    const lastSave = url.lastSaveTimestamp ?? (lastCheck?.timestamp ?? 0);
+    const timeSinceLastSave = timestamp - lastSave;
+    const intervalReached = timeSinceLastSave >= saveInterval;
+    const shouldSave = statusChanged || intervalReached;
 
     // Only record the check if status changed or save interval reached
     if (shouldSave) {
+      console.log(`[Uptime Save] Saving check for ${url.label} - Status changed: ${statusChanged}, Interval reached: ${intervalReached}, Time since last: ${Math.round(timeSinceLastSave / 1000)}s`);
+
       await ctx.runMutation(internal.uptime.recordCheck, {
         serviceUrlId: args.urlId,
         timestamp,
@@ -78,6 +85,8 @@ export const checkUrl = internalAction({
         urlId: args.urlId,
         timestamp,
       });
+    } else {
+      console.log(`[Uptime Skip] Skipping save for ${url.label} - Time since last: ${Math.round(timeSinceLastSave / 1000)}s/${saveInterval / 1000}s`);
     }
 
     // Check if we should send email alerts (only if URL has userId configured)
