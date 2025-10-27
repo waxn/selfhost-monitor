@@ -8,13 +8,21 @@ import type { Id } from "./_generated/dataModel";
 const getEncryptionKey = () => process.env.ENCRYPTION_KEY;
 
 export const checkUrl = internalAction({
-  args: { urlId: v.id("serviceUrls") },
+  args: {
+    urlId: v.id("serviceUrls"),
+    // Optional: pass url data to avoid re-querying
+    urlData: v.optional(v.any()),
+    lastCheckData: v.optional(v.any()),
+    userData: v.optional(v.any()),
+    serviceData: v.optional(v.any()),
+  },
   handler: async (ctx, args) => {
-    const url = await ctx.runQuery(internal.uptime.getUrl, { id: args.urlId });
+    // Use passed data if available, otherwise query
+    const url = args.urlData ?? await ctx.runQuery(internal.uptime.getUrl, { id: args.urlId });
     if (!url) return;
 
-    // Get the last check to detect status changes
-    const lastCheck = await ctx.runQuery(internal.uptime.getLastCheck, { urlId: args.urlId });
+    // Get the last check to detect status changes (use passed data if available)
+    const lastCheck = args.lastCheckData ?? await ctx.runQuery(internal.uptime.getLastCheck, { urlId: args.urlId });
 
     // Decrypt the URL before making the request
     const decryptedUrl = (await decrypt(url.url, getEncryptionKey())) || url.url;
@@ -49,7 +57,7 @@ export const checkUrl = internalAction({
 
     // Determine if we should save this check to the database
     const statusChanged = lastCheck ? lastCheck.isUp !== isUp : true; // Always save first check
-    const saveInterval = (url.saveInterval ?? 5) * 60 * 1000; // convert minutes to ms, default 5 min
+    const saveInterval = (url.saveInterval ?? 15) * 60 * 1000; // convert minutes to ms, default 15 min
     const lastSave = url.lastSaveTimestamp ?? 0;
     const shouldSave = statusChanged || (timestamp - lastSave >= saveInterval);
 
@@ -81,19 +89,18 @@ export const checkUrl = internalAction({
         const statusChanged = lastCheck ? lastCheck.isUp !== isUp : false;
         console.log('[Email Debug] Status changed:', statusChanged, '(lastCheck.isUp:', lastCheck?.isUp, 'current isUp:', isUp, ')');
 
-        const shouldAlert = await ctx.runQuery(internal.uptime.shouldSendAlert, {
-          urlId: args.urlId,
-          statusChanged,
-          isUp,
-          notifyOnDown: url.notifyOnDown ?? true,
-          notifyOnRecovery: url.notifyOnRecovery ?? true,
-        });
+        // Check rate limiting inline (avoid extra query)
+        const cooldownPeriod = 15 * 60 * 1000; // 15 minutes
+        const shouldAlert = statusChanged &&
+          ((!isUp && (url.notifyOnDown ?? true)) || (isUp && (url.notifyOnRecovery ?? true))) &&
+          (!url.lastAlertTimestamp || (timestamp - url.lastAlertTimestamp >= cooldownPeriod));
+
         console.log('[Email Debug] shouldAlert returned:', shouldAlert);
 
         if (shouldAlert) {
-          // Get user and service info for the email
-          const user = await ctx.runQuery(internal.uptime.getUserForAlert, { userId: url.userId });
-          const service = await ctx.runQuery(internal.uptime.getServiceForUrl, { urlId: args.urlId });
+          // Use passed data if available, otherwise query
+          const user = args.userData ?? await ctx.runQuery(internal.uptime.getUserForAlert, { userId: url.userId });
+          const service = args.serviceData ?? await ctx.runQuery(internal.uptime.getServiceForUrl, { urlId: args.urlId });
 
           console.log('[Email Debug] User found:', !!user, 'notificationEmail:', user?.notificationEmail, 'emailNotificationsEnabled:', user?.emailNotificationsEnabled);
           console.log('[Email Debug] Service found:', !!service, 'name:', service?.name);
@@ -152,10 +159,11 @@ export const checkUrl = internalAction({
 
 export const checkAllUrls = internalAction({
   handler: async (ctx) => {
-    const urls = await ctx.runQuery(internal.uptime.getAllUrls);
+    // Fetch all data in one batch query
+    const allData = await ctx.runQuery(internal.uptime.getAllUrlsWithData);
 
     // Filter URLs that should be monitored
-    const urlsToCheck = urls.filter((url) => {
+    const urlsToCheck = allData.urls.filter((url: any) => {
       // Skip if excluded from uptime monitoring
       if (url.excludeFromUptime) return false;
 
@@ -168,11 +176,16 @@ export const checkAllUrls = internalAction({
       return true;
     });
 
-    // Check all active URLs in parallel (runs every 10 seconds via cron)
-    // Individual URLs control save frequency via saveInterval
+    // Check all active URLs in parallel, passing pre-fetched data to avoid redundant queries
     await Promise.all(
-      urlsToCheck.map((url: { _id: any }) =>
-        ctx.runAction(internal.uptime.checkUrl, { urlId: url._id })
+      urlsToCheck.map((url: any) =>
+        ctx.runAction(internal.uptime.checkUrl, {
+          urlId: url._id,
+          urlData: url,
+          lastCheckData: allData.lastChecks[url._id],
+          userData: url.userId ? allData.users[url.userId] : undefined,
+          serviceData: url.serviceId ? allData.services[url.serviceId] : undefined,
+        })
       )
     );
   },
@@ -188,6 +201,56 @@ export const getUrl = internalQuery({
 export const getAllUrls = internalQuery({
   handler: async (ctx) => {
     return await ctx.db.query("serviceUrls").collect();
+  },
+});
+
+// Optimized: Fetch all URLs with related data in a single query
+export const getAllUrlsWithData = internalQuery({
+  handler: async (ctx) => {
+    // Get all URLs
+    const urls = await ctx.db.query("serviceUrls").collect();
+
+    // Get all last checks for each URL (batch query)
+    const lastChecks: Record<string, any> = {};
+    for (const url of urls) {
+      const lastCheck = await ctx.db
+        .query("uptimeChecks")
+        .withIndex("by_url", (q) => q.eq("serviceUrlId", url._id))
+        .order("desc")
+        .first();
+      if (lastCheck) {
+        lastChecks[url._id] = lastCheck;
+      }
+    }
+
+    // Get unique user IDs and service IDs
+    const userIds = new Set(urls.map(u => u.userId).filter(Boolean));
+    const serviceIds = new Set(urls.map(u => u.serviceId).filter(Boolean));
+
+    // Batch fetch users
+    const users: Record<string, any> = {};
+    for (const userId of userIds) {
+      if (userId) {
+        const user = await ctx.db.get(userId);
+        if (user) users[userId] = user;
+      }
+    }
+
+    // Batch fetch services
+    const services: Record<string, any> = {};
+    for (const serviceId of serviceIds) {
+      if (serviceId) {
+        const service = await ctx.db.get(serviceId);
+        if (service) services[serviceId] = service;
+      }
+    }
+
+    return {
+      urls,
+      lastChecks,
+      users,
+      services,
+    };
   },
 });
 
