@@ -669,8 +669,8 @@
 										<div class="settings-option">
 											<div class="settings-label-with-link">
 												<div class="settings-label">Email Notifications</div>
-												<a href="/alert-settings" class="advanced-settings-link">
-													⚙️ Advanced Alert Settings
+												<a href="/alerts" class="advanced-settings-link">
+													⚙️ Manage Alerts
 												</a>
 											</div>
 											<label class="toggle-label">
@@ -845,8 +845,8 @@
 									<div class="settings-option">
 										<div class="settings-label-with-link">
 											<div class="settings-label">Email Notifications</div>
-											<a href="/alert-settings" class="advanced-settings-link">
-												⚙️ Advanced Alert Settings
+											<a href="/alerts" class="advanced-settings-link">
+												⚙️ Manage Alerts
 											</a>
 										</div>
 										<label class="toggle-label">

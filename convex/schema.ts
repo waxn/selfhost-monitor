@@ -26,6 +26,14 @@ export default defineSchema({
     layoutWidth: v.optional(v.number()),
     layoutHeight: v.optional(v.number()),
     layoutOrder: v.optional(v.number()),
+    // Alert customization
+    useCustomAlerts: v.optional(v.boolean()), // If true, use service-specific settings
+    customDownAlertSubject: v.optional(v.string()),
+    customDownAlertBody: v.optional(v.string()),
+    customRecoveryAlertSubject: v.optional(v.string()),
+    customRecoveryAlertBody: v.optional(v.string()),
+    alertPriority: v.optional(v.union(v.literal("low"), v.literal("medium"), v.literal("high"), v.literal("critical"))),
+    alertTags: v.optional(v.array(v.string())), // Custom tags for filtering/grouping
   }).index("by_user", ["userId"]),
 
   serviceUrls: defineTable({
@@ -50,6 +58,19 @@ export default defineSchema({
     firstFailureTimestamp: v.optional(v.number()), // Timestamp of first failure in current streak
     // Track last save for interval-based saving
     lastSaveTimestamp: v.optional(v.number()),
+    // Per-URL custom alerts
+    useCustomAlerts: v.optional(v.boolean()), // Override service-level alerts
+    customDownAlertSubject: v.optional(v.string()),
+    customDownAlertBody: v.optional(v.string()),
+    customRecoveryAlertSubject: v.optional(v.string()),
+    customRecoveryAlertBody: v.optional(v.string()),
+    // Additional alert recipients
+    additionalEmails: v.optional(v.array(v.string())), // CC additional emails for this URL
+    // Alert conditions
+    alertOnSlowResponse: v.optional(v.boolean()), // Alert if response time exceeds threshold
+    slowResponseThreshold: v.optional(v.number()), // Response time in ms to consider "slow"
+    alertOnStatusCodes: v.optional(v.array(v.number())), // Alert on specific status codes (e.g., [500, 503])
+    ignoreStatusCodes: v.optional(v.array(v.number())), // Don't alert on these codes (e.g., [503])
   }).index("by_service", ["serviceId"]).index("by_user", ["userId"]),
 
   uptimeChecks: defineTable({
@@ -80,7 +101,7 @@ export default defineSchema({
     emailNotificationsEnabled: v.optional(v.boolean()),
   }).index("by_name", ["name"]).index("by_email", ["email"]),
 
-  // Alert settings and templates
+  // Global alert settings (per user)
   alertSettings: defineTable({
     userId: v.id("users"),
     // Global alert defaults
@@ -105,5 +126,31 @@ export default defineSchema({
     quietHoursStart: v.optional(v.string()), // HH:MM format
     quietHoursEnd: v.optional(v.string()), // HH:MM format
     timezone: v.optional(v.string()),
+  }).index("by_user", ["userId"]),
+
+  // Reusable alert profiles/templates
+  alertProfiles: defineTable({
+    userId: v.id("users"),
+    name: v.string(), // e.g., "Critical Production", "Dev Environment", "Low Priority"
+    description: v.optional(v.string()),
+    // Alert thresholds
+    minDowntime: v.number(),
+    consecutiveFailures: v.number(),
+    alertCooldown: v.number(),
+    // Email templates
+    downAlertSubject: v.optional(v.string()),
+    downAlertBody: v.optional(v.string()),
+    recoveryAlertSubject: v.optional(v.string()),
+    recoveryAlertBody: v.optional(v.string()),
+    // Alert conditions
+    alertOnSlowResponse: v.optional(v.boolean()),
+    slowResponseThreshold: v.optional(v.number()),
+    alertOnStatusCodes: v.optional(v.array(v.number())),
+    ignoreStatusCodes: v.optional(v.array(v.number())),
+    // Behavior
+    notifyOnDown: v.boolean(),
+    notifyOnRecovery: v.boolean(),
+    additionalEmails: v.optional(v.array(v.string())),
+    priority: v.optional(v.union(v.literal("low"), v.literal("medium"), v.literal("high"), v.literal("critical"))),
   }).index("by_user", ["userId"]),
 });

@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as alertProfiles from "../alertProfiles.js";
 import type * as alertSettings from "../alertSettings.js";
 import type * as auth from "../auth.js";
 import type * as crons from "../crons.js";
@@ -38,6 +39,7 @@ import type {
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  alertProfiles: typeof alertProfiles;
   alertSettings: typeof alertSettings;
   auth: typeof auth;
   crons: typeof crons;

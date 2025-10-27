@@ -5,6 +5,27 @@ import { encrypt, decrypt } from "./encryption";
 // Get encryption key from environment variables
 const getEncryptionKey = () => process.env.ENCRYPTION_KEY;
 
+export const get = query({
+  args: { id: v.id("services"), userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const service = await ctx.db.get(args.id);
+    if (!service || (service.userId && service.userId !== args.userId)) {
+      throw new Error("Unauthorized");
+    }
+    // Decrypt notes
+    let decryptedNotes = null;
+    try {
+      decryptedNotes = service.notes ? await decrypt(service.notes, getEncryptionKey()) : null;
+    } catch (error) {
+      console.error(`Error decrypting notes:`, error);
+    }
+    return {
+      ...service,
+      notes: decryptedNotes,
+    };
+  },
+});
+
 export const list = query({
   args: { userId: v.optional(v.id("users")) },
   handler: async (ctx, args) => {
@@ -129,6 +150,14 @@ export const update = mutation({
     deviceId: v.optional(v.id("devices")),
     iconUrl: v.optional(v.string()),
     userId: v.id("users"),
+    // Alert customization
+    useCustomAlerts: v.optional(v.boolean()),
+    customDownAlertSubject: v.optional(v.string()),
+    customDownAlertBody: v.optional(v.string()),
+    customRecoveryAlertSubject: v.optional(v.string()),
+    customRecoveryAlertBody: v.optional(v.string()),
+    alertPriority: v.optional(v.union(v.literal("low"), v.literal("medium"), v.literal("high"), v.literal("critical"))),
+    alertTags: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
     const { id, userId, ...updates } = args;
