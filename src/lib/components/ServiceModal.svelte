@@ -105,6 +105,12 @@
 
 		try {
 			console.log('Submitting service with userId:', currentUser._id);
+			console.log('URLs being saved:', urls.map(u => ({
+				label: u.label,
+				emailAlertsEnabled: u.emailAlertsEnabled,
+				notifyOnDown: u.notifyOnDown,
+				notifyOnRecovery: u.notifyOnRecovery
+			})));
 			if (editingService) {
 				await updateService({
 					id: editingService._id,
@@ -130,6 +136,7 @@
 				for (const url of urls) {
 					const normalizedUrl = normalizeUrl(url.url);
 					if (url.id) {
+						console.log('Updating URL:', url.label, 'emailAlertsEnabled:', url.emailAlertsEnabled);
 						await updateUrl({
 							id: url.id,
 							label: url.label,
@@ -142,6 +149,7 @@
 							userId: currentUser._id
 						});
 					} else {
+						console.log('Creating new URL:', url.label, 'emailAlertsEnabled:', url.emailAlertsEnabled);
 						await createUrl({
 							serviceId: editingService._id,
 							label: url.label,
@@ -301,7 +309,18 @@
 							<input type="text" bind:value={url.url} placeholder="youtube.com or 192.168.1.100:8080" class="url-input" />
 							<input type="number" bind:value={url.pingInterval} placeholder="5" min="1" class="url-interval" />
 							<input type="checkbox" bind:checked={url.excludeFromUptime} class="url-skip" title="Exclude from uptime monitoring" />
-							<input type="checkbox" bind:checked={url.emailAlertsEnabled} class="url-email" title="Enable email alerts for this URL" />
+							<div class="email-checkbox-wrapper">
+								<input
+									type="checkbox"
+									bind:checked={url.emailAlertsEnabled}
+									class="url-email"
+									title="Enable email alerts for this URL"
+									onchange={() => console.log('Alert checkbox changed for', url.label, ':', url.emailAlertsEnabled)}
+								/>
+								{#if url.emailAlertsEnabled}
+									<span class="email-indicator" title="Email alerts enabled">📧</span>
+								{/if}
+							</div>
 							<button type="button" onclick={() => removeUrlAtIndex(i)} class="remove-btn">×</button>
 						</div>
 						{#if url.emailAlertsEnabled}
@@ -509,8 +528,15 @@
 		transform: translate(-50%, -50%);
 	}
 
-	.url-email {
+	.email-checkbox-wrapper {
 		flex: 0 0 30px;
+		display: flex;
+		align-items: center;
+		gap: 4px;
+		position: relative;
+	}
+
+	.url-email {
 		width: 18px;
 		height: 18px;
 		cursor: pointer;
@@ -522,6 +548,7 @@
 		border-radius: 4px;
 		position: relative;
 		transition: all 0.2s;
+		flex-shrink: 0;
 	}
 
 	.url-email:hover {
@@ -535,12 +562,31 @@
 	}
 
 	.url-email:checked::after {
-		content: '📧';
+		content: '✓';
 		position: absolute;
-		font-size: 11px;
+		color: white;
+		font-size: 12px;
+		font-weight: bold;
 		top: 50%;
 		left: 50%;
 		transform: translate(-50%, -50%);
+	}
+
+	.email-indicator {
+		font-size: 14px;
+		line-height: 1;
+		animation: fadeIn 0.2s ease-in;
+	}
+
+	@keyframes fadeIn {
+		from {
+			opacity: 0;
+			transform: scale(0.8);
+		}
+		to {
+			opacity: 1;
+			transform: scale(1);
+		}
 	}
 
 	.url-alert-options {

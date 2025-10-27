@@ -17,7 +17,9 @@
       "WebFetch(domain:labs.convex.dev)",
       "Bash(openssl rand -hex 32)",
       "Read(//home/linus/Downloads/selfhost-monitor/**)",
-      "Bash(readlink -f ~/Downloads/selfhost-monitor)"
+      "Bash(readlink -f ~/Downloads/selfhost-monitor)",
+      "Bash(git log:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []

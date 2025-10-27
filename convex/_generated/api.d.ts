@@ -10,6 +10,7 @@
 
 import type * as auth from "../auth.js";
 import type * as crons from "../crons.js";
+import type * as debugEmail from "../debugEmail.js";
 import type * as devices from "../devices.js";
 import type * as emails from "../emails.js";
 import type * as encryption from "../encryption.js";
@@ -38,6 +39,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   crons: typeof crons;
+  debugEmail: typeof debugEmail;
   devices: typeof devices;
   emails: typeof emails;
   encryption: typeof encryption;
