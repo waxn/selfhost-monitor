@@ -40,7 +40,7 @@ export default defineSchema({
     serviceId: v.id("services"),
     label: v.string(),
     url: v.string(), // ENCRYPTED: May contain private IPs/internal URLs
-    pingInterval: v.optional(v.number()), // How often to ping (seconds, default: 10)
+    pingInterval: v.optional(v.number()), // How often to ping (seconds, default: 30)
     saveInterval: v.optional(v.number()), // How often to save to DB (minutes, default: 10)
     excludeFromUptime: v.optional(v.boolean()),
     userId: v.optional(v.id("users")),

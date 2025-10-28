@@ -68,8 +68,6 @@ export const checkUrl = internalAction({
 
     // Only record the check if status changed or save interval reached
     if (shouldSave) {
-      console.log(`[Uptime Save] Saving check for ${url.label} - Status changed: ${statusChanged}, Interval reached: ${intervalReached}, Time since last: ${Math.round(timeSinceLastSave / 1000)}s`);
-
       await ctx.runMutation(internal.uptime.recordCheck, {
         serviceUrlId: args.urlId,
         timestamp,
@@ -85,18 +83,13 @@ export const checkUrl = internalAction({
         urlId: args.urlId,
         timestamp,
       });
-    } else {
-      console.log(`[Uptime Skip] Skipping save for ${url.label} - Time since last: ${Math.round(timeSinceLastSave / 1000)}s/${saveInterval / 1000}s`);
     }
 
     // Check if we should send email alerts (only if URL has userId configured)
-    console.log('[Email Debug] Checking email conditions for URL:', url.label);
-    console.log('[Email Debug] emailAlertsEnabled:', url.emailAlertsEnabled, 'userId:', url.userId);
 
     if (url.emailAlertsEnabled && url.userId) {
       try {
         const statusChanged = lastCheck ? lastCheck.isUp !== isUp : false;
-        console.log('[Email Debug] Status changed:', statusChanged, '(lastCheck.isUp:', lastCheck?.isUp, 'current isUp:', isUp, ')');
 
         // Track consecutive failures and downtime duration
         let currentFailureCount = url.currentFailureCount ?? 0;
@@ -146,23 +139,14 @@ export const checkUrl = internalAction({
           shouldAlert = cooldownExpired;
         }
 
-        console.log('[Email Debug] Alert conditions - shouldAlert:', shouldAlert,
-          'downtime:', downtimeDuration, 'threshold:', minDowntime,
-          'failures:', currentFailureCount, 'required:', requiredFailures,
-          'cooldown:', cooldownExpired);
-
         if (shouldAlert) {
           // Use passed data if available, otherwise query
           const user = args.userData ?? await ctx.runQuery(internal.uptime.getUserForAlert, { userId: url.userId });
           const service = args.serviceData ?? await ctx.runQuery(internal.uptime.getServiceForUrl, { urlId: args.urlId });
 
-          console.log('[Email Debug] User found:', !!user, 'notificationEmail:', user?.notificationEmail, 'emailNotificationsEnabled:', user?.emailNotificationsEnabled);
-          console.log('[Email Debug] Service found:', !!service, 'name:', service?.name);
-
           if (user && user.notificationEmail && user.emailNotificationsEnabled && service) {
             // Send appropriate alert
             if (!isUp && (url.notifyOnDown ?? true)) {
-              console.log('[Email Debug] Sending DOWN alert to:', user.notificationEmail);
               await ctx.runAction(internal.emails.sendDownAlert, {
                 recipientEmail: user.notificationEmail,
                 recipientName: user.name,
@@ -177,7 +161,6 @@ export const checkUrl = internalAction({
               // Calculate downtime duration
               const downtimeDuration = lastCheck ? timestamp - lastCheck.timestamp : undefined;
 
-              console.log('[Email Debug] Sending RECOVERY alert to:', user.notificationEmail);
               await ctx.runAction(internal.emails.sendRecoveryAlert, {
                 recipientEmail: user.notificationEmail,
                 recipientName: user.name,
@@ -192,23 +175,16 @@ export const checkUrl = internalAction({
             }
 
             // Update last alert timestamp
-            console.log('[Email Debug] Email sent successfully, updating lastAlertTimestamp');
             await ctx.runMutation(internal.uptime.updateLastAlertTimestamp, {
               urlId: args.urlId,
               timestamp,
             });
-          } else {
-            console.log('[Email Debug] Skipping email - missing required fields');
           }
-        } else {
-          console.log('[Email Debug] Skipping email - shouldAlert returned false');
         }
       } catch (emailError) {
-        // Don't fail uptime check if email fails - just log it
-        console.error("[Email Debug] Email alert failed (continuing uptime check):", emailError);
+        // Don't fail uptime check if email fails - just log error
+        console.error("Email alert failed:", emailError);
       }
-    } else {
-      console.log('[Email Debug] Skipping email - alerts not enabled or no userId');
     }
   },
 });
@@ -217,6 +193,7 @@ export const checkAllUrls = internalAction({
   handler: async (ctx) => {
     // Fetch all data in one batch query
     const allData = await ctx.runQuery(internal.uptime.getAllUrlsWithData);
+    const now = Date.now();
 
     // Filter URLs that should be monitored
     const urlsToCheck = allData.urls.filter((url: any) => {
@@ -227,6 +204,18 @@ export const checkAllUrls = internalAction({
       if (!url.userId) {
         console.warn(`Skipping URL ${url._id} (${url.label}) - no userId`);
         return false;
+      }
+
+      // Check if enough time has passed since last check based on pingInterval
+      const pingInterval = (url.pingInterval ?? 30) * 1000; // Convert seconds to ms, default 30s
+      const lastCheck = allData.lastChecks[url._id];
+
+      if (lastCheck) {
+        const timeSinceLastCheck = now - lastCheck.timestamp;
+        if (timeSinceLastCheck < pingInterval) {
+          // Not time to check yet
+          return false;
+        }
       }
 
       return true;
