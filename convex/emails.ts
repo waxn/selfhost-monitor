@@ -47,122 +47,15 @@ export const sendDownAlert = internalAction({
       const formattedTime = new Date(args.timestamp).toLocaleString();
       const recipientName = args.recipientName || "User";
 
-      // Fetch custom templates if userId is provided
+      // Use default templates (custom template support can be added later)
       let subject = `🔴 Service Down: ${args.serviceName} - ${args.urlLabel}`;
       let htmlBody = getDefaultDownHTML(args, recipientName, formattedTime);
-
-      if (args.userId) {
-        const settings = await ctx.runQuery(internal.alertSettings.get, { userId: args.userId });
-        if (settings) {
-          const variables = {
-            serviceName: args.serviceName,
-            urlLabel: args.urlLabel,
-            timestamp: formattedTime,
-            statusCode: args.statusCode,
-            errorMessage: args.errorMessage,
-            recipientName,
-          };
-
-          if (settings.downAlertSubject) {
-            subject = renderTemplate(settings.downAlertSubject, variables);
-          }
-          if (settings.downAlertBody) {
-            htmlBody = renderTemplate(settings.downAlertBody, variables);
-          }
-        }
-      }
 
       const response = await resend.emails.send({
         from: "SelfHost Monitor <alerts@hlm.waxnflaxnai.com>",
         to: args.recipientEmail,
         subject,
-        html: htmlBody.includes('<!DOCTYPE') || htmlBody.includes('<html') ? htmlBody : `
-          <!DOCTYPE html>
-          <html>
-            <head>
-              <style>
-                body {
-                  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-                  line-height: 1.6;
-                  color: #333;
-                  max-width: 600px;
-                  margin: 0 auto;
-                  padding: 20px;
-                }
-                .container {
-                  background: #ffffff;
-                  border: 1px solid #e1e4e8;
-                  border-radius: 8px;
-                  padding: 24px;
-                }
-                .alert-header {
-                  background: #c0392b;
-                  color: white;
-                  padding: 16px;
-                  border-radius: 6px;
-                  margin-bottom: 20px;
-                }
-                .alert-header h1 {
-                  margin: 0;
-                  font-size: 20px;
-                  font-weight: 600;
-                }
-                .service-info {
-                  background: #f6f8fa;
-                  border-left: 4px solid #c0392b;
-                  padding: 16px;
-                  margin: 16px 0;
-                  border-radius: 4px;
-                }
-                .service-info p {
-                  margin: 8px 0;
-                }
-                .timestamp {
-                  color: #6c757d;
-                  font-size: 14px;
-                  margin-top: 20px;
-                  padding-top: 16px;
-                  border-top: 1px solid #e1e4e8;
-                }
-                .footer {
-                  margin-top: 24px;
-                  padding-top: 16px;
-                  border-top: 1px solid #e1e4e8;
-                  color: #6c757d;
-                  font-size: 12px;
-                }
-              </style>
-            </head>
-            <body>
-              <div class="container">
-                <div class="alert-header">
-                  <h1>🔴 Service Down Alert</h1>
-                </div>
-
-                <p>Hello ${recipientName},</p>
-
-                <p>Your monitored service has gone down and is currently unreachable.</p>
-
-                <div class="service-info">
-                  <p><strong>Service:</strong> ${args.serviceName}</p>
-                  <p><strong>URL Label:</strong> ${args.urlLabel}</p>
-                  ${errorDetails}
-                </div>
-
-                <p>Please check your service and take appropriate action.</p>
-
-                <div class="timestamp">
-                  <strong>Time:</strong> ${formattedTime}
-                </div>
-
-                <div class="footer">
-                  <p>This is an automated alert from SelfHost Monitor.</p>
-                  <p>You're receiving this because you enabled email notifications for this service.</p>
-                </div>
-              </div>
-            </body>
-          </html>
-        `,
+        html: htmlBody,
       });
 
       console.log("Down alert email sent successfully:", response);
@@ -216,123 +109,15 @@ export const sendRecoveryAlert = internalAction({
       const recipientName = args.recipientName || "User";
       const formattedDowntime = args.downtimeDuration ? formatDuration(args.downtimeDuration) : undefined;
 
-      // Fetch custom templates if userId is provided
+      // Use default templates (custom template support can be added later)
       let subject = `✅ Service Recovered: ${args.serviceName} - ${args.urlLabel}`;
       let htmlBody = getDefaultRecoveryHTML(args, recipientName, formattedTime);
-
-      if (args.userId) {
-        const settings = await ctx.runQuery(internal.alertSettings.get, { userId: args.userId });
-        if (settings) {
-          const variables = {
-            serviceName: args.serviceName,
-            urlLabel: args.urlLabel,
-            timestamp: formattedTime,
-            statusCode: args.statusCode,
-            responseTime: args.responseTime,
-            downtimeDuration: formattedDowntime,
-            recipientName,
-          };
-
-          if (settings.recoveryAlertSubject) {
-            subject = renderTemplate(settings.recoveryAlertSubject, variables);
-          }
-          if (settings.recoveryAlertBody) {
-            htmlBody = renderTemplate(settings.recoveryAlertBody, variables);
-          }
-        }
-      }
 
       const response = await resend.emails.send({
         from: "SelfHost Monitor <alerts@hlm.waxnflaxnai.com>",
         to: args.recipientEmail,
         subject,
-        html: htmlBody.includes('<!DOCTYPE') || htmlBody.includes('<html') ? htmlBody : `
-          <!DOCTYPE html>
-          <html>
-            <head>
-              <style>
-                body {
-                  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-                  line-height: 1.6;
-                  color: #333;
-                  max-width: 600px;
-                  margin: 0 auto;
-                  padding: 20px;
-                }
-                .container {
-                  background: #ffffff;
-                  border: 1px solid #e1e4e8;
-                  border-radius: 8px;
-                  padding: 24px;
-                }
-                .alert-header {
-                  background: #229954;
-                  color: white;
-                  padding: 16px;
-                  border-radius: 6px;
-                  margin-bottom: 20px;
-                }
-                .alert-header h1 {
-                  margin: 0;
-                  font-size: 20px;
-                  font-weight: 600;
-                }
-                .service-info {
-                  background: #f6f8fa;
-                  border-left: 4px solid #229954;
-                  padding: 16px;
-                  margin: 16px 0;
-                  border-radius: 4px;
-                }
-                .service-info p {
-                  margin: 8px 0;
-                }
-                .timestamp {
-                  color: #6c757d;
-                  font-size: 14px;
-                  margin-top: 20px;
-                  padding-top: 16px;
-                  border-top: 1px solid #e1e4e8;
-                }
-                .footer {
-                  margin-top: 24px;
-                  padding-top: 16px;
-                  border-top: 1px solid #e1e4e8;
-                  color: #6c757d;
-                  font-size: 12px;
-                }
-              </style>
-            </head>
-            <body>
-              <div class="container">
-                <div class="alert-header">
-                  <h1>✅ Service Recovered</h1>
-                </div>
-
-                <p>Hello ${recipientName},</p>
-
-                <p>Good news! Your service is back online and responding normally.</p>
-
-                <div class="service-info">
-                  <p><strong>Service:</strong> ${args.serviceName}</p>
-                  <p><strong>URL Label:</strong> ${args.urlLabel}</p>
-                  ${responseTimeInfo}
-                  ${args.statusCode ? `<p><strong>Status Code:</strong> ${args.statusCode}</p>` : ""}
-                  ${downtimeInfo}
-                </div>
-
-                <div class="timestamp">
-                  <strong>Recovery Time:</strong> ${formattedTime}
-                </div>
-
-                <div class="footer">
-                  <p>This is an automated alert from SelfHost Monitor.</p>
-                  <p>You're receiving this because you enabled email notifications for this service.</p>
-                </div>
-              </div>
-            </body>
-          </html>
-        `,
+        html: htmlBody,
       });
 
       console.log("Recovery alert email sent:", response);
