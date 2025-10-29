@@ -21,6 +21,14 @@ export const checkUrl = internalAction({
     const url = args.urlData ?? await ctx.runQuery(internal.uptime.getUrl, { id: args.urlId });
     if (!url) return;
 
+    const timestamp = Date.now();
+
+    // Update lastCheckTimestamp immediately to prevent duplicate checks
+    await ctx.runMutation(internal.uptime.updateLastCheckTimestamp, {
+      urlId: args.urlId,
+      timestamp,
+    });
+
     // Get the last check to detect status changes (use passed data if available)
     const lastCheck = args.lastCheckData ?? await ctx.runQuery(internal.uptime.getLastCheck, { urlId: args.urlId });
 
@@ -191,39 +199,40 @@ export const checkUrl = internalAction({
 
 export const checkAllUrls = internalAction({
   handler: async (ctx) => {
-    // Fetch all data in one batch query
-    const allData = await ctx.runQuery(internal.uptime.getAllUrlsWithData);
+    // First, get just the URLs (lightweight)
+    const allUrls = await ctx.runQuery(internal.uptime.getAllUrls);
     const now = Date.now();
 
-    // Filter URLs that should be monitored
-    const urlsToCheck = allData.urls.filter((url: any) => {
+    // Determine which URLs need checking based on lastCheckTimestamp stored on the URL
+    const urlsNeedingCheck = allUrls.filter((url: any) => {
       // Skip if excluded from uptime monitoring
       if (url.excludeFromUptime) return false;
 
       // Skip if no userId (orphaned URLs from migration)
-      if (!url.userId) {
-        console.warn(`Skipping URL ${url._id} (${url.label}) - no userId`);
-        return false;
-      }
+      if (!url.userId) return false;
 
       // Check if enough time has passed since last check based on pingInterval
       const pingInterval = (url.pingInterval ?? 30) * 1000; // Convert seconds to ms, default 30s
-      const lastCheck = allData.lastChecks[url._id];
+      const lastCheckTime = url.lastCheckTimestamp ?? 0;
 
-      if (lastCheck) {
-        const timeSinceLastCheck = now - lastCheck.timestamp;
-        if (timeSinceLastCheck < pingInterval) {
-          // Not time to check yet
-          return false;
-        }
-      }
+      const timeSinceLastCheck = now - lastCheckTime;
+      return timeSinceLastCheck >= pingInterval;
+    });
 
-      return true;
+    // If no URLs need checking, return early
+    if (urlsNeedingCheck.length === 0) {
+      return;
+    }
+
+    // Only fetch lastChecks and related data for URLs that need checking
+    const urlIdsToCheck = urlsNeedingCheck.map((u: any) => u._id);
+    const allData = await ctx.runQuery(internal.uptime.getAllUrlsWithData, {
+      urlIdsToCheck
     });
 
     // Check all active URLs in parallel, passing pre-fetched data to avoid redundant queries
     await Promise.all(
-      urlsToCheck.map((url: any) =>
+      urlsNeedingCheck.map((url: any) =>
         ctx.runAction(internal.uptime.checkUrl, {
           urlId: url._id,
           urlData: url,
@@ -249,28 +258,37 @@ export const getAllUrls = internalQuery({
   },
 });
 
-// Optimized: Fetch all URLs with related data in a single query
+// Optimized: Fetch all URLs with related data - only fetch last checks for URLs that need checking
 export const getAllUrlsWithData = internalQuery({
-  handler: async (ctx) => {
+  args: {
+    urlIdsToCheck: v.optional(v.array(v.id("serviceUrls"))), // Only fetch checks for these URLs
+  },
+  handler: async (ctx, args) => {
     // Get all URLs
     const urls = await ctx.db.query("serviceUrls").collect();
 
-    // Get all last checks for each URL (batch query)
+    // Only get last checks for URLs that need checking (to reduce queries)
     const lastChecks: Record<string, any> = {};
-    for (const url of urls) {
-      const lastCheck = await ctx.db
-        .query("uptimeChecks")
-        .withIndex("by_url", (q) => q.eq("serviceUrlId", url._id))
-        .order("desc")
-        .first();
-      if (lastCheck) {
-        lastChecks[url._id] = lastCheck;
+    if (args.urlIdsToCheck && args.urlIdsToCheck.length > 0) {
+      for (const urlId of args.urlIdsToCheck) {
+        const lastCheck = await ctx.db
+          .query("uptimeChecks")
+          .withIndex("by_url", (q) => q.eq("serviceUrlId", urlId))
+          .order("desc")
+          .first();
+        if (lastCheck) {
+          lastChecks[urlId] = lastCheck;
+        }
       }
     }
 
-    // Get unique user IDs and service IDs
-    const userIds = new Set(urls.map(u => u.userId).filter(Boolean));
-    const serviceIds = new Set(urls.map(u => u.serviceId).filter(Boolean));
+    // Get unique user IDs and service IDs (only for URLs being checked)
+    const urlsToCheck = args.urlIdsToCheck
+      ? urls.filter(u => args.urlIdsToCheck!.includes(u._id))
+      : urls;
+
+    const userIds = new Set(urlsToCheck.map(u => u.userId).filter(Boolean));
+    const serviceIds = new Set(urlsToCheck.map(u => u.serviceId).filter(Boolean));
 
     // Batch fetch users
     const users: Record<string, any> = {};
@@ -477,6 +495,18 @@ export const updateLastSaveTimestamp = internalMutation({
   handler: async (ctx, args) => {
     await ctx.db.patch(args.urlId, {
       lastSaveTimestamp: args.timestamp,
+    });
+  },
+});
+
+export const updateLastCheckTimestamp = internalMutation({
+  args: {
+    urlId: v.id("serviceUrls"),
+    timestamp: v.number(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.urlId, {
+      lastCheckTimestamp: args.timestamp,
     });
   },
 });

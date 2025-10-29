@@ -42,6 +42,7 @@ export default defineSchema({
     url: v.string(), // ENCRYPTED: May contain private IPs/internal URLs
     pingInterval: v.optional(v.number()), // How often to ping (seconds, default: 30)
     saveInterval: v.optional(v.number()), // How often to save to DB (minutes, default: 10)
+    lastCheckTimestamp: v.optional(v.number()), // Last time URL was checked (for bandwidth optimization)
     excludeFromUptime: v.optional(v.boolean()),
     userId: v.optional(v.id("users")),
     // Email alert settings
